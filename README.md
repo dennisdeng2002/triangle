@@ -1,17 +1,22 @@
-## Synopsis
+##### Synopsis
 A couple of guys who were up to no good...
 
-## Installation
+#### Installation
 Clone the project:
-	git clone https://ikerelli@bitbucket.org/apron/triangle.git
-Install:
-- Rstudio
-- ggtern
-- ggplot2
+	
+```
+#!r
 
-## Contributors
+git clone https://ikerelli@bitbucket.org/apron/triangle.git
+```
+
+Install:
+* Rstudio
+* ggplot2
+* ggtern
+
+#### Contributors
 - D Nice 
 - Ikerelli
 - K.C. Hen
 - Marky Mark
-
