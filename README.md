@@ -1,4 +1,4 @@
-##### Synopsis
+#### Synopsis
 A couple of guys who were up to no good...
 
 #### Installation
