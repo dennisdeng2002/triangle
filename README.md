@@ -12,9 +12,9 @@ git clone https://ikerelli@bitbucket.org/apron/triangle.git
 
 Install:
 
-* Rstudio
-* ggplot2
-* ggtern
+* [Rstudio+Shiny](https://www.rstudio.com/)
+* [ggplot2](http://ggplot2.org/)
+* [ggtern](www.ggtern.com)
 
 #### Contributors
 - D Nice 
