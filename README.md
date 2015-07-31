@@ -11,6 +11,7 @@ git clone https://ikerelli@bitbucket.org/apron/triangle.git
 ```
 
 Install:
+
 * Rstudio
 * ggplot2
 * ggtern
