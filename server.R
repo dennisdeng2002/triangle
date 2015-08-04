@@ -7,7 +7,6 @@
 
 library(shiny)
 library(ggtern)
-library(plotly)
 library(gridSVG)
 library(svgPanZoom)
 library(rhandsontable)
@@ -48,17 +47,6 @@ shinyServer(function(input, output) {
   svgPanZoom(gg, controlIconsEnabled = TRUE)
   })
   
-  
-  # Update table data
-  values = list()
-  setHot = function(x) values[["hot"]] <<- x
-  
-  observe({
-    input$plot_button
-    if (!is.null(values[["hot"]])) 
-      print(values[["hot"]])
-  })
-  
   output$info <- renderText({
     xy_str <- function(e) {
       if(is.null(e)) return("NULL\n")
@@ -77,20 +65,40 @@ shinyServer(function(input, output) {
       "brush: ", xy_range_str(input$plot_brush)
     )
   })
+   
+  # Update table data
+  values = list()
+  setHot = function(x) values[["hot"]] <<- x
+  
+  observe({
+    input$plot_button
+    if(!is.null(values[["hot"]])){
+      print(values[["hot"]])
+    }
+  })
   
   output$hot <- renderRHandsontable({
-  
+  DF = NULL
   # Check if table is empty - intialize table
-  if (!is.null(input$tabledata)) {
-    DF = hot_to_r(input$tabledata)
+  if (!is.null(input$hot)) {
+    DF = hot_to_r(input$hot)
     setHot(DF)
-    rhandsontable(DF) %>%
-      hot_table(highlightCol = TRUE, highlightRow = TRUE)} 
+    values[["hot"]] = DF} 
+    
+  else if (!is.null(values[["hot"]])) {
+    DF = values[["hot"]]
+  }
+    
   else {
-    DF = data.frame(matrix("", nrow=10, ncol=3))
+    DF = data.frame(matrix(0, nrow=10, ncol=3))
     setHot(DF)
     rhandsontable(DF) %>%
       hot_table(highlightCol = TRUE, highlightRow = TRUE)}
+  
+  if (!is.null(DF)){
+    rhandsontable(DF) %>%
+      hot_table(highlightCol = TRUE, highlightRow = TRUE)
+  }
   })
  
 })

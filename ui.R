@@ -7,7 +7,6 @@
 
 library(shiny)
 library(ggtern)
-library(plotly)
 library(gridSVG)
 library(svgPanZoom)
 library(rhandsontable)
@@ -29,7 +28,6 @@ shinyUI(fluidPage(
   verbatimTextOutput("info"),
   # Generate plot
   mainPanel(
-    align = "left",
     column(width = 12, class = "well",
     plotOutput("TernPlot"
                      , click = "plot_click",
