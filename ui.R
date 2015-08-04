@@ -6,20 +6,37 @@
 #
 
 library(shiny)
+library(ggtern)
+library(plotly)
+library(gridSVG)
+library(svgPanZoom)
+library(rhandsontable)
 
-shinyUI(pageWithSidebar(
+shinyUI(fluidPage(
   
   # Application title
-  headerPanel("Graph"),
+  headerPanel("Ternary Diagram"),
   
-  # Sidebar with a slider input for number of bins
+  # Sidebar
   sidebarPanel(
-    fileInput("file1",
-                "Upload Data:")
+  # Upload CSV file  
+  fileInput("file1", "Upload Data:"),
+  # Generate table
+  rHandsontableOutput("hot"),
+  # Commit changes to table
+  actionButton("plot_button","Graph")
   ),
-  
-  # Show a plot of the generated distribution
+  verbatimTextOutput("info"),
+  # Generate plot
   mainPanel(
-    plotOutput("linePlot")
-  )
+    align = "left",
+    column(width = 12, class = "well",
+    plotOutput("TernPlot"
+                     , click = "plot_click",
+               dblclick = "plot_dblclick",
+               hover = "plot_hover",
+               brush = brushOpts(
+               id = "plot_brush",
+               resetOnNew = TRUE))
+  ))
 ))
