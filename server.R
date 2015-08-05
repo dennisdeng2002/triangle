@@ -12,12 +12,11 @@ library(svgPanZoom)
 library(rhandsontable)
 
 shinyServer(function(input, output) {
-  
+  # Used to resize graph (zoom)
   ranges <- reactiveValues(x = NULL, y = NULL)
   
-  # Generate Ternary Plot
+  # Generate ternary plot
   output$TernPlot <- renderPlot({
-
   # Store data file
   infile <- input$file1
   # Check if data file is valid
@@ -25,18 +24,32 @@ shinyServer(function(input, output) {
     return(NULL)
   else{
     myData = read.csv(infile$datapath)
-    }
-  # Check for brush/double click - zoom
-  observeEvent(input$plot_dblclick, {
-    brush <- input$plot_brush
-    if (!is.null(brush)) {
-      ranges$x <- c(brush$xmin, brush$xmax)
-      ranges$y <- c(brush$ymin, brush$ymax)
+    # Fill table with uploaded data
+    setHot(myData)
+    output$hot <- renderRHandsontable({
+      DF = NULL
+      # Set table values after change
+      if (!is.null(input$hot)) {
+        DF = hot_to_r(input$hot)
+        setHot(DF)
+        values[["hot"]] = DF} 
+      # Check if table values isn't empty
+      else if (!is.null(values[["hot"]])) {
+        DF = values[["hot"]]
+      }
+      # If empty initialize table = myData
+      else {
+        DF = myData
+        setHot(DF)
+        rhandsontable(DF) %>%
+          hot_table(highlightCol = TRUE, highlightRow = TRUE)}
       
-    } else {
-      ranges$x <- NULL
-      ranges$y <- NULL
-    }})
+      if (!is.null(DF)){
+        rhandsontable(DF) %>%
+          hot_table(highlightCol = TRUE, highlightRow = TRUE)
+      }
+    })
+  }
   
   # Render ternary diagram
   gg <- ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
@@ -47,6 +60,18 @@ shinyServer(function(input, output) {
   svgPanZoom(gg, controlIconsEnabled = TRUE)
   })
   
+  # Check for brush/double-click used for zoom
+  observeEvent(input$plot_dblclick, {
+    brush <- input$plot_brush
+    if (!is.null(brush)) {
+      ranges$x <- c(brush$xmin, brush$xmax)
+      ranges$y <- c(brush$ymin, brush$ymax)
+      
+    } else {
+      ranges$x <- NULL
+      ranges$y <- NULL
+    }})
+  # Output data for click, double-click, hover, and brush
   output$info <- renderText({
     xy_str <- function(e) {
       if(is.null(e)) return("NULL\n")
@@ -70,35 +95,45 @@ shinyServer(function(input, output) {
   values = list()
   setHot = function(x) values[["hot"]] <<- x
   
-  observe({
-    input$plot_button
+  # Graph Button
+  observeEvent(input$plot_button,{
     if(!is.null(values[["hot"]])){
-      print(values[["hot"]])
+      myData = values[["hot"]]
     }
+    else{
+      myData = data.frame(matrix(0, nrow=10, ncol=3))
+    }
+    output$TernPlot <- renderPlot({
+    gg <- ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
+      geom_point() + 
+      coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
+                 R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
+                 Tlim = NULL, Llim = NULL, Rlim = NULL, clockwise)
+    svgPanZoom(gg, controlIconsEnabled = TRUE)})
   })
   
   output$hot <- renderRHandsontable({
-  DF = NULL
-  # Check if table is empty - intialize table
-  if (!is.null(input$hot)) {
-    DF = hot_to_r(input$hot)
-    setHot(DF)
-    values[["hot"]] = DF} 
+    DF = NULL
+    # Set table values after change
+    if (!is.null(input$hot)) {
+      DF = hot_to_r(input$hot)
+      setHot(DF)
+      values[["hot"]] = DF} 
+    # Check if table values isn't empty
+    else if (!is.null(values[["hot"]])) {
+      DF = values[["hot"]]
+    }
+    # If empty initialize table = 0
+    else {
+      DF = data.frame(matrix(0, nrow=10, ncol=3))
+      setHot(DF)
+      rhandsontable(DF) %>%
+        hot_table(highlightCol = TRUE, highlightRow = TRUE)}
     
-  else if (!is.null(values[["hot"]])) {
-    DF = values[["hot"]]
-  }
-    
-  else {
-    DF = data.frame(matrix(0, nrow=10, ncol=3))
-    setHot(DF)
-    rhandsontable(DF) %>%
-      hot_table(highlightCol = TRUE, highlightRow = TRUE)}
-  
-  if (!is.null(DF)){
-    rhandsontable(DF) %>%
-      hot_table(highlightCol = TRUE, highlightRow = TRUE)
-  }
+    if (!is.null(DF)){
+      rhandsontable(DF) %>%
+        hot_table(highlightCol = TRUE, highlightRow = TRUE)
+    }
   })
  
 })
