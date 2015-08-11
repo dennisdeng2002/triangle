@@ -1,4 +1,16 @@
+#### server.R
+# Issues: 
+### LOAD LIBRARIES ###
+library(shiny)         # SHINY - Web interface
+library(ggtern)        # Plotting ternary diagram
+library(gridSVG)       # Converting Image to SVG
+library(svgPanZoom)    # Pan and Zoom function
+library(rhandsontable) # Table interface
+library(tools)
+library(plyr)
+library(grid)
 
+<<<<<<< HEAD
 library(shiny)
 library(ggtern)
 library(gridSVG)
@@ -6,11 +18,23 @@ library(svgPanZoom)
 library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
+=======
+plotit <- function(myData, ranges) {
+  ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
+    geom_point() + 
+    coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
+               R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
+               Tlim = NULL, Llim = NULL, Rlim = NULL) +
+    theme(axis.tern.showtitles=F, axis.tern.showarrows = T)
+}
+
+>>>>>>> c79f4e669bbfd731ddcddc035cde073a0b9ad3d0
 
 shinyServer(function(input, output, session) {
   
   # Used to resize graph (zoom)
   ranges <- reactiveValues(x = NULL, y = NULL)
+<<<<<<< HEAD
   # Counter used to initialize table at startup
   counter <- reactiveValues(i = 0, j = 0, k = 0)
   # Update table data structure
@@ -219,6 +243,21 @@ shinyServer(function(input, output, session) {
 #       ranges$x <- NULL
 #       ranges$y <- NULL
 #     }})
+=======
+  # Check for brush/double-click used for zoom
+  observeEvent(input$plot_dblclick, {
+    brush <- input$plot_brush
+    if (!is.null(brush)) {
+      ranges$x <- c(brush$xmin, brush$xmax)
+      ranges$y <- c(brush$ymin, brush$ymax)
+      print("aok")
+      
+    } else {
+      ranges$x <- NULL
+      ranges$y <- NULL
+    }})
+
+>>>>>>> c79f4e669bbfd731ddcddc035cde073a0b9ad3d0
   
   # Output data for click, double-click, hover, and brush
   output$info <- renderText({
@@ -241,5 +280,108 @@ shinyServer(function(input, output, session) {
       # "brush: ", xy_range_str(input$plot_brush)
     )
   })
+<<<<<<< HEAD
   
 })
+=======
+
+  # Update table data
+  values = list()
+  setHot = function(x) values[["hot"]] <<- x
+        
+  
+  
+  # Generate ternary plot based on file upload
+  output$TernPlot <- renderPlot({
+    # Store data file
+    infile <- input$file1
+    validate(
+      need(file_ext(infile$name) %in% c(
+        'text/csv',
+        'text/comma-separated-values',
+        'text/tab-separated-values',
+        'text/plain',
+        'csv',
+        'tsv'
+      ), "Incorrect File Format try again!"))
+    read.csv(infile$datapath)
+    # Check if data file is valid
+    if (is.null(infile))
+      return(NULL)
+    else{
+      myData = read.csv(infile$datapath)
+      # Fill table with uploaded data
+      setHot(myData)
+      output$hot <- renderRHandsontable({
+        DF = NULL
+        # Set table values after change
+        if (!is.null(input$hot)) {
+          DF = hot_to_r(input$hot)
+          setHot(DF)
+          values[["hot"]] = DF} 
+        # Check if table values isn't empty
+        else if (!is.null(values[["hot"]])) {
+          DF = values[["hot"]]
+        }
+        # If empty initialize table = myData
+        else {
+          DF = myData
+          setHot(DF)
+          rhandsontable(DF) %>%
+            hot_table(highlightCol = TRUE, highlightRow = TRUE)
+          }
+        
+        if (!is.null(DF)){
+          rhandsontable(DF) %>%
+            hot_table(highlightCol = TRUE, highlightRow = TRUE)
+        }
+      })
+    }
+    
+    # Render ternary diagram
+    gg <- plotit(myData, ranges)
+    svgPanZoom(gg, controlIconsEnabled = 0)
+  })
+  
+  # Graph Button (Generate ternary plot on button action)
+  observeEvent(input$plot_button,{
+    if(!is.null(values[["hot"]])){
+      myData = values[["hot"]]
+      output$TernPlot <- renderPlot({
+        gg <- plotit(myData, ranges)
+         svgPanZoom(gg, controlIconsEnabled = 0)
+        })
+      print("graph butt")
+    }
+    else{
+      myData = data.frame(matrix(0.0, nrow=10, ncol=3))
+    }
+  })
+  
+  # Hot Table
+  output$hot <- renderRHandsontable({
+    DF = NULL
+    # Set table values after change
+    if (!is.null(input$hot)) {
+      DF = hot_to_r(input$hot)
+      setHot(DF)
+      values[["hot"]] = DF} 
+    # Check if table values isn't empty
+    else if (!is.null(values[["hot"]])) {
+      DF = values[["hot"]]
+    }
+    # If empty initialize table = 0
+    else {
+      DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+      setHot(DF)
+      rhandsontable(DF) %>%
+        hot_table(highlightCol = TRUE, highlightRow = TRUE)}
+    
+    if (!is.null(DF)){
+      rhandsontable(DF) %>%
+        hot_table(highlightCol = TRUE, highlightRow = TRUE)
+    }
+  })
+ 
+})
+>>>>>>> c79f4e669bbfd731ddcddc035cde073a0b9ad3d0
