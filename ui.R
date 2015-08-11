@@ -1,40 +1,47 @@
 
-# This is the user-interface definition of a Shiny web application.
-# You can find out more about building applications with Shiny here:
-# 
-# http://www.rstudio.com/shiny/
-#
-
 library(shiny)
 library(ggtern)
 library(gridSVG)
 library(svgPanZoom)
+library(SVGAnnotation)
 library(rhandsontable)
+library(tools)
 
-shinyUI(fluidPage(
-  
+shinyUI(
+  navbarPage("LLE",
+             tabPanel("Ternary",
   # Application title
   headerPanel("Ternary Diagram"),
   
   # Sidebar
   sidebarPanel(
-  # Upload CSV file  
-  fileInput("file1", "Upload Data:"),
-  # Generate table
-  rHandsontableOutput("hot"),
-  # Commit changes to table
-  actionButton("plot_button","Graph")
-  ),
+    # Upload CSV file of equilibrium data
+    fileInput("EQfile", "Upload Equilibrium Data:"),
+    # Upload CSV file of tie-line data
+    fileInput("TLfile", "Upload Tie-Line Data:"),
+    # Generate equilibrium data table
+    h4("Equilibrium Data"),
+    rHandsontableOutput("EQhot"),
+    # Generate tie-line data table
+    h4("Tie-Line Data"),
+    rHandsontableOutput("TLhot"),
+    # Graph data table changes
+    actionButton("graph_button","Graph"),
+    # Clear table/plot
+    actionButton("clear_button","Clear"),
+    width = 4
+    ),
   verbatimTextOutput("info"),
   # Generate plot
   mainPanel(
     column(width = 12, class = "well",
-    plotOutput("TernPlot"
-                     , click = "plot_click",
+           plotOutput("TernPlot"
+                      , click = "plot_click",
                dblclick = "plot_dblclick",
-               hover = "plot_hover",
-               brush = brushOpts(
-               id = "plot_brush",
-               resetOnNew = TRUE))
-  ))
+               hover = "plot_hover")
+#                brush = brushOpts(
+#                id = "plot_brush",
+#                resetOnNew = TRUE))
+  ))),
+  tabPanel("Help")
 ))
