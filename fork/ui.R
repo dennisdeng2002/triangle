@@ -7,8 +7,9 @@ library(gridSVG)       # Converting Image to SVG
 library(svgPanZoom)    # Pan and Zoom function
 library(rhandsontable) # Table interface
 library(tools)
-library(grid)         
-library(markdown)      # Used for Help
+library(plyr)
+library(Cairo)  
+library(grid)
 
 shinyUI(
     navbarPage("LLE",
@@ -25,26 +26,26 @@ shinyUI(
             # Commit changes to table
               actionButton("plot_button","Graph")),
             
+            
             # verbatimTextOutput("info"),
           
             
             # Generate plot
             mainPanel(
               column(width = 12, class = "well",
-               plotOutput("TernPlot", 
-               width = "100%",
-               click = "plot_click",
-               dblclick = "plot_dblclick",
-               hover = "plot_hover",
-               brush = brushOpts(
-                id = "plot_brush",
-                resetOnNew = TRUE)))
+#                plotOutput("TernPlot", 
+#                width = "100%",
+#                click = "plot_click",
+#                dblclick = "plot_dblclick",
+#                hover = "plot_hover",
+#                brush = brushOpts(
+#                 id = "plot_brush",
+#                 resetOnNew = TRUE))
+                 svgPanZoomOutput(outputId = "TernPlot")
+               )
               )),
 #                  ))
           tabPanel("Help",
-             headerPanel("Ternary Diagram"),
-             fluidRow(
-               column(4,
-                      includeMarkdown("HELP.md")
-               )))
+             headerPanel("Ternary Diagram"))
+ 
 ))

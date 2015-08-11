@@ -9,27 +9,19 @@ library(rhandsontable) # Table interface
 library(tools)
 library(plyr)
 library(grid)
-
-plotit <- function(myData, ranges) {
-  ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
-    geom_point() + 
-    coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
-               R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
-               Tlim = NULL, Llim = NULL, Rlim = NULL) +
-    theme(axis.tern.showtitles=F, axis.tern.showarrows = T)
-}
+library(Cairo)  
 
 
 shinyServer(function(input, output) {
   # Used to resize graph (zoom)
   ranges <- reactiveValues(x = NULL, y = NULL)
+
   # Check for brush/double-click used for zoom
   observeEvent(input$plot_dblclick, {
     brush <- input$plot_brush
     if (!is.null(brush)) {
       ranges$x <- c(brush$xmin, brush$xmax)
       ranges$y <- c(brush$ymin, brush$ymax)
-      print("aok")
       
     } else {
       ranges$x <- NULL
@@ -64,7 +56,7 @@ shinyServer(function(input, output) {
   
   
   # Generate ternary plot based on file upload
-  output$TernPlot <- renderPlot({
+  output$TernPlot <- renderSvgPanZoom({
     # Store data file
     infile <- input$file1
     validate(
@@ -111,26 +103,39 @@ shinyServer(function(input, output) {
     }
     
     # Render ternary diagram
-    gg <- plotit(myData, ranges)
-    svgPanZoom(gg, controlIconsEnabled = 0)
+    gg <- ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
+      geom_point() + 
+      coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
+                 R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
+                 Tlim = NULL, Llim = NULL, Rlim = NULL)
+    svgPanZoom(gg, controlIconsEnabled = 1)
   })
   
-  # Graph Button (Generate ternary plot on button action)
+  # Graph Button
   observeEvent(input$plot_button,{
     if(!is.null(values[["hot"]])){
       myData = values[["hot"]]
-      output$TernPlot <- renderPlot({
-        gg <- plotit(myData, ranges)
-         svgPanZoom(gg, controlIconsEnabled = 0)
-        })
-      print("graph butt")
+      output$TernPlot <- renderSvgPanZoom({
+        gg <- ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
+          geom_point() + 
+          coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
+                     R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
+                     Tlim = NULL, Llim = NULL, Rlim = NULL)
+        svgPanZoom(gg, controlIconsEnabled = TRUE)})
+      print("ok")
     }
     else{
       myData = data.frame(matrix(0.0, nrow=10, ncol=3))
     }
+#     output$TernPlot <- renderPlot({
+#       gg <- ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
+#         geom_point() + 
+#         coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
+#                    R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
+#                    Tlim = NULL, Llim = NULL, Rlim = NULL)
+#       svgPanZoom(gg, controlIconsEnabled = TRUE)})
   })
   
-  # Hot Table
   output$hot <- renderRHandsontable({
     DF = NULL
     # Set table values after change
@@ -144,7 +149,7 @@ shinyServer(function(input, output) {
     }
     # If empty initialize table = 0
     else {
-      DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+      DF = data.frame(matrix(0, nrow=10, ncol=3))
       setHot(DF)
       rhandsontable(DF) %>%
         hot_table(highlightCol = TRUE, highlightRow = TRUE)}
