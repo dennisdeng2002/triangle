@@ -1,4 +1,3 @@
-
 library(shiny)
 library(ggtern)
 library(gridSVG)
@@ -31,14 +30,17 @@ shinyUI(
     actionButton("clear_button","Clear"),
     width = 4
     ),
-  verbatimTextOutput("info"),
+#   verbatimTextOutput("info"),
+  sliderInput("raffinate", label = "Raffinate", min = 1, max = 12, value = c(1,6)),
+  sliderInput("extract", label = "Extract", min = 1, max = 12, value = c(7,12)),
+#   sliderInput("zoom_slider", label = "Zoom", min = 0, max = 2.0, value = 1.0, step = 0.1),
   # Generate plot
   mainPanel(
     column(width = 12, class = "well",
-           plotOutput("TernPlot"
-                      , click = "plot_click",
-               dblclick = "plot_dblclick",
-               hover = "plot_hover")
+           svgPanZoomOutput("TernPlot")
+#                       , click = "plot_click",
+#                dblclick = "plot_dblclick",
+#                hover = "plot_hover")
 #                brush = brushOpts(
 #                id = "plot_brush",
 #                resetOnNew = TRUE))
