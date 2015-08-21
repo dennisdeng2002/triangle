@@ -10,6 +10,8 @@ library(tools)
 library(plyr)
 library(grid)
 library(Cairo)  
+#source("plotik.R")
+
 
 
 shinyServer(function(input, output) {
@@ -103,11 +105,7 @@ shinyServer(function(input, output) {
     }
     
     # Render ternary diagram
-    gg <- ggtern(data = myData, aes_string(x=colnames(myData)[1], y=colnames(myData)[2], z=colnames(myData)[3])) +
-      geom_point() + 
-      coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
-                 R = getOption("tern.default.R"), xlim = ranges$x, ylim = ranges$y,
-                 Tlim = NULL, Llim = NULL, Rlim = NULL)
+    gg <- plotitk(myData,ranges)
     svgPanZoom(gg, controlIconsEnabled = 1)
   })
   

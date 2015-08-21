@@ -1,10 +1,11 @@
-library(shiny)
-library(ggtern)
-library(gridSVG)
-library(svgPanZoom)
-library(SVGAnnotation)
-library(rhandsontable)
-library(tools)
+# library(shiny)
+# # library(ggtern)
+# # library(gridSVG)
+# # library(svgPanZoom)
+# # library(SVGAnnotation)
+# # library(rhandsontable)
+# # library(tools)
+library(shinydashboard)
 
 shinyUI(
   navbarPage("LLE",
@@ -28,6 +29,8 @@ shinyUI(
     actionButton("graph_button","Graph"),
     # Clear table/plot
     actionButton("clear_button","Clear"),
+    conditionalPanel("output.fileUploaded",
+      actionLink("axistog", "Toggle axis display")),
     width = 4
     ),
 #   verbatimTextOutput("info"),

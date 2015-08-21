@@ -1,0 +1,31 @@
+#   # Zoom based on slider input
+#   observeEvent(input$zoom_slider, {
+#       
+#     zoom <- input$zoom_slider
+#     if (!is.null(zoom)) {
+#       zoomranges$x <- c(0, zoom)
+#       zoomranges$y <- c(0, zoom)
+#         
+#     } else {
+#       zoomranges$x <- NULL
+#       zoomranges$y <- NULL
+#     }
+#     print(zoomranges$x)
+#     print(zoomranges$y)
+#   })
+#   
+#   # Output data for click, double-click, hover, and brush
+#   output$info <- renderText({
+#     
+#     xy_str <- function(e) {
+#       if(is.null(e)) return("NULL\n")
+#       paste0("x=", round(e$x, 2), " y=", round(e$y, 2), "\n")
+#     }
+#     
+#     paste0(
+#       "click: ", xy_str(input$plot_click),
+#       "dblclick: ", xy_str(input$plot_dblclick),
+#       "hover: ", xy_str(input$plot_hover)
+#     )
+#   })
+  

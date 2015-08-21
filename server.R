@@ -5,6 +5,13 @@ library(svgPanZoom)
 library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
+source("functions/interpolate.R")
+source("functions/interpolateTL.R")
+source("functions/sortDecreasing.R")
+source("functions/normalize.R")
+source("functions/plotit.R")
+
+
 
 shinyServer(function(input, output, session) {
   
@@ -17,6 +24,9 @@ shinyServer(function(input, output, session) {
   # Update table data structure
   values = list()
   setTable = function(x, name) values[[name]] <<- x
+  # Make toggle values reactive
+  toggle = reactiveValues(status = NULL, hit = 1, ike = 0)
+
   
   # Set equilibrium graph data
   myEQData <- reactive({
@@ -49,10 +59,13 @@ shinyServer(function(input, output, session) {
         ), "Incorrect File Format try again!"))
       # Check if data file is valid
       if (is.null(infile)){
-        # Set table to default (0)
-        DF = data.frame(matrix(0.0, nrow=10, ncol=3))
-        setTable(DF, name = "EQhot")}
+        #         # Set table to default (0)
+        #         DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+        #         setTable(DF, name = "
+        return(NULL) 
+        }
       else{
+      
       # Set table to uploaded data
       DF = read.csv(infile$datapath)
       setTable(DF, name = "EQhot")
@@ -60,6 +73,11 @@ shinyServer(function(input, output, session) {
       # Data sets with odd numbers will require rounding (not yet implemented)
       updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,nrow(DF)/2))
       updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c((nrow(DF)/2)+1,nrow(DF)))
+      # Extract Column Headings
+      col_head <- colnames(myEQData())
+      toggle$on <-TRUE
+      toggle$ike <- toggle$ike + 1
+      print(toggle$ike)
       }
     })
     
@@ -81,6 +99,11 @@ shinyServer(function(input, output, session) {
     
     # Return updated data
     values[["EQhot"]]
+    
+
+
+    
+    
   })
   
   # Set tie-line graph data
@@ -133,8 +156,9 @@ shinyServer(function(input, output, session) {
         # Set table to uploaded data
         DF = read.csv(infile$datapath)
         setTable(DF, name = "TLhot")
+        print(values[["TLhot"]])
         # Set returned graph data to interpolated values
-        TLData = interpolateTL()
+        TLData = interpolateTL(values, ranges)
         setTable(TLData, name = "TLgraph")
         }
     })
@@ -147,7 +171,7 @@ shinyServer(function(input, output, session) {
         DF = hot_to_r(input$TLhot)
         setTable(DF, name = "TLhot")
         # Set returned graph data to default (0)
-        TLData = interpolateTL()
+        TLData = interpolateTL(values, ranges)
         setTable(TLData, name = "TLgraph")
         }
     })
@@ -166,53 +190,16 @@ shinyServer(function(input, output, session) {
     result = list(values[["TLgraph"]], values[["TLhot"]])
   })
   
-#   # Manually add point to graph
-#   myData <- reactive({
-# 
-#     # Call reactive function for clear button
-#     input$clear_button
-#     
-#     # Initialize empty table during startup
-#     if(counter$k == 0){
-#       # Set table to default (0)
-#       DF = data.frame(matrix(0.0, nrow=1, ncol=3))
-#       sethot(DF)
-#       counter$k = isolate(counter$k) + 1
-#     }
-#     
-#     # Call reactive function for double click - store as variable A
-#     A <- input$plot_dblclick
-#     # Check if double click occurs within plot (non-zero vector)
-#     if(length(A)!=0){
-#       x1 = sqrt(3)/2*(1-A$x-A$y)
-#       x2 = 0.5*(1+A$x-A$y)
-#       x3 = 1-x1-x2
-#       DF=data.frame(x1,x2,x3)
-#       sethot(DF)
-#     }
-#     # Check if clear button has been pressed
-#     observeEvent(input$clear_button, priority = 1,{
-#     })
-#     
-#     # Return data point
-#     values[["hot"]]
-#   })
+
 
   # Generate ternary plot
   output$TernPlot <- renderSvgPanZoom({
     # Extract data from myTLData() as a data frame instead of a list value
     TLData <- as.data.frame(myTLData()[1])
     # Render ternary diagram
-    gg <- ggtern(data = myEQData(), aes_string(x=colnames(myEQData())[1], y=colnames(myEQData())[2], z=colnames(myEQData())[3])) +
-    geom_point() + theme() +
-    # Render tie-lines
-    geom_segment(data = TLData, aes_string(x=colnames(TLData)[1],y=colnames(TLData)[2],z=colnames(TLData)[3],xend=colnames(TLData)[4],yend=colnames(TLData)[5],zend=colnames(TLData)[6]))
-#     # Add point
-#     geom_point(data = myData(), aes_string(x=colnames(myData())[1], y=colnames(myData())[2], z=colnames(myData())[3])) +
-# #     Used to resize graph during zoom
-#     coord_tern(T = getOption("tern.default.T"), L = getOption("tern.default.L"),
-#                R = getOption("tern.default.R"), xlim = zoomranges$x, ylim = zoomranges$y,
-#                Tlim = NULL, Llim = NULL, Rlim = NULL, clockwise)
+    
+    
+    gg <- plotit(myEQData, TLData, toggle$hit)
     
     # Works with both renderPlot/plotOutput (mouse events) and renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
     # svgPanZoom(gg, controlIconsEnabled = TRUE)
@@ -237,138 +224,14 @@ shinyServer(function(input, output, session) {
     rhandsontable(TLData) %>%
       hot_table(highlightCol = TRUE, highlightRow = TRUE)
   })
-  
-  interpolateTL <- function(){
-    # Normalize tie-line data
-    TLData = normalize(values[["TLhot"]])
-    # Sort equilibrium data based on raffinate/extract side
-    EQData = sortDecreasing(values[["EQhot"]])
-    # For loop counter
-    rows = seq(1,nrow(TLData))
-    # Initialize placeholder matrix
-    interTLData = data.frame(matrix(0.0, nrow = nrow(TLData), ncol = 2*ncol(EQData)))
-    for(i in rows){ 
-      interTLData[i,1] = TLData[i,1]
-      interTLData[i,2] = interpolate(TLData[i,1], range = ranges$R, EQData)[1]
-      interTLData[i,3] = interpolate(TLData[i,1], range = ranges$R, EQData)[2]
-      interTLData[i,4] = TLData[i,2]
-      interTLData[i,5] = interpolate(TLData[i,2], range = ranges$E, EQData)[1]
-      interTLData[i,6] = interpolate(TLData[i,2], range = ranges$E, EQData)[2]
-    }
-    interTLData
-  }
-  
-  interpolate <- function(x, range, myData){
-    # Set range to 1 minus inputted range
-    range = seq(range[1],range[length(range)-1])
-    # Generic form for a linear equation
-    first_order <- function(newdist, model) {
-      coefs <- coef(model)
-      #y = b + mx
-      res <- coefs[1] + (coefs[2] * newdist)
-      return(res)
-    }
-    # Example: x = Acetone, y = Water, z = TCE
-    for(i in range){
-      # Check whether tie-line data = equilibrium data
-      if(myData[i,1] == x){
-        # Modeling water as a function of acetone
-        y <- myData[i,2]
-        z <- myData[i,3]
-        break
-      } 
-      # Check whether tie-line data falls between equilibrium data
-      else if(myData[i,1] > x & x > myData[i+1,1]){
-        # Modeling water as a function of acetone
-        fit <- lm(myData[(i):(i+1),2]~myData[(i):(i+1),1])
-        # Calculate theoretical water and TCE values
-        y <- first_order(x, fit)
-        z <- 1-y-x
-        break
-      } 
-      else{
-      }
-    }
-    # Return both y and z
-    yz = c(y,z)
-    return(yz)
-  }
-  
-  sortDecreasing <- function(myData){
-    myData = normalize(myData)
-    columns = seq(1,ncol(myData))
-    tempR = myData[ranges$R,]
-    row.names(tempR) <- 1:nrow(tempR)
-    tempR = tempR[order(tempR[,1], decreasing = TRUE),]
-    tempE = myData[ranges$E,]
-    row.names(tempE) <- 1:nrow(tempE)
-    tempE = tempE[order(tempE[,1], decreasing = TRUE),]
-    if(ranges$R[1]==1){
-      myData = rbind(tempR, tempE)
-    }
-    else if(ranges$E[1]==1){
-      myData = rbind(tempE, tempR)  
-    }
-    row.names(myData) <- 1:nrow(myData)
-    myData
-  }
-  
-  normalize <- function(myData){
-    rows = seq(1,nrow(myData))
-    columns = seq(1,ncol(myData))
-    counter = 0
-    # Loop used to determine whether values are given as strictly decimals or whole numbers (which can also contain decimals)
-    for(i in rows){
-      for(j in columns){
-        if(myData[i,j] > 1){
-          counter = counter + 1
-          # Assume that if more than 4 (arbitrary) values are > 1, then all values need to be rounded
-          if(counter > 4){
-            break
-          }
-        }
-      }
-    }
-    # Normalize to 1 if values aren't given as decimals
-    if(counter > 4){
-      for(i in rows){
-        for(j in columns){
-            myData[i,j] = myData[i,j] / 100
-        }
-      }
-    }
-    myData
-  }
-  
-#   # Zoom based on slider input
-#   observeEvent(input$zoom_slider, {
-#       
-#     zoom <- input$zoom_slider
-#     if (!is.null(zoom)) {
-#       zoomranges$x <- c(0, zoom)
-#       zoomranges$y <- c(0, zoom)
-#         
-#     } else {
-#       zoomranges$x <- NULL
-#       zoomranges$y <- NULL
-#     }
-#     print(zoomranges$x)
-#     print(zoomranges$y)
-#   })
-#   
-#   # Output data for click, double-click, hover, and brush
-#   output$info <- renderText({
-#     
-#     xy_str <- function(e) {
-#       if(is.null(e)) return("NULL\n")
-#       paste0("x=", round(e$x, 2), " y=", round(e$y, 2), "\n")
-#     }
-#     
-#     paste0(
-#       "click: ", xy_str(input$plot_click),
-#       "dblclick: ", xy_str(input$plot_dblclick),
-#       "hover: ", xy_str(input$plot_hover)
-#     )
-#   })
-  
+ 
+  # Toggle options
+  output$fileUploaded <- reactive({
+    return(!is.null(toggle$on))
+  })
+  outputOptions(output, 'fileUploaded', suspendWhenHidden=FALSE)
+  observeEvent(input$axistog, {
+    toggle$hit <- ((input$axistog[1]) %% 6 ) + 1
+  })
+
 })

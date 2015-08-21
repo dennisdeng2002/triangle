@@ -1,5 +1,5 @@
 #### Synopsis
-Shiny web application for LLE solving. Consists of a ternary plot used for visualizing component compositions, CSV/and Excel table used for data input. 
+Shiny web application for multistage counter-current extraction. Consists of a ternary plot used for visualizing component compositions, CSV/and Excel table used for data input and tie line interpolation. 
 
 #### Installation
 Clone the project:
