@@ -23,7 +23,7 @@ Make a Commit:
 ```
 #!r
 1. cd /root/directory/of/project # Go to the directory containing the .git/ folder
-2. git add * # Add everything in the folder to be staged (staging comes before committing).
+2. git add . # Add everything in the folder to be staged (staging comes before committing **!Notice the dot!**).
 3. git status # IMPORTANT: Overview of what will be changed.
 4. git commit -m "Message of changes/fixes" # Make sure the comments are meaningful
 5. git push origin master # Push to the server
