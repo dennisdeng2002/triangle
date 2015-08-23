@@ -1,10 +1,3 @@
-# library(shiny)
-# # library(ggtern)
-# # library(gridSVG)
-# # library(svgPanZoom)
-# # library(SVGAnnotation)
-# # library(rhandsontable)
-# # library(tools)
 library(shinydashboard)
 
 shinyUI(
@@ -29,6 +22,7 @@ shinyUI(
     actionButton("graph_button","Graph"),
     # Clear table/plot
     actionButton("clear_button","Clear"),
+    #toggle
     conditionalPanel("output.fileUploaded",
       actionLink("axistog", "Toggle axis display")),
     width = 4

@@ -5,6 +5,7 @@ library(svgPanZoom)
 library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
+
 source("functions/interpolate.R")
 source("functions/interpolateTL.R")
 source("functions/sortDecreasing.R")
@@ -13,10 +14,11 @@ source("functions/plotit.R")
 
 
 
+
 shinyServer(function(input, output, session) {
   
   # Used to resize graph (zoom)
-  zoomranges <- reactiveValues(x = NULL, y = NULL)
+  #zoomranges <- reactiveValues(x = NULL, y = NULL)
   # Counter used to initialize table at startup
   counter <- reactiveValues(i = 0, j = 0, k = 0)
   # Used to distinguish raffinate/extract values
@@ -25,7 +27,7 @@ shinyServer(function(input, output, session) {
   values = list()
   setTable = function(x, name) values[[name]] <<- x
   # Make toggle values reactive
-  toggle = reactiveValues(status = NULL, hit = 1, ike = 0)
+  toggle = reactiveValues(status = NULL, hit = 1, rowsEQ = 0)
 
   
   # Set equilibrium graph data
@@ -59,9 +61,6 @@ shinyServer(function(input, output, session) {
         ), "Incorrect File Format try again!"))
       # Check if data file is valid
       if (is.null(infile)){
-        #         # Set table to default (0)
-        #         DF = data.frame(matrix(0.0, nrow=10, ncol=3))
-        #         setTable(DF, name = "
         return(NULL) 
         }
       else{
@@ -76,8 +75,7 @@ shinyServer(function(input, output, session) {
       # Extract Column Headings
       col_head <- colnames(myEQData())
       toggle$on <-TRUE
-      toggle$ike <- toggle$ike + 1
-      print(toggle$ike)
+      toggle$rowsEQ <- nrow(myEQData())
       }
     })
     
@@ -93,24 +91,26 @@ shinyServer(function(input, output, session) {
     # Check if clear button has been pressed
     observeEvent(input$clear_button, priority = 1,{
       # Set table to default (0)
-      DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+      
+      DF = data.frame(matrix(0.0, nrow=toggle$rowsEQ, ncol=3))
       setTable(DF, name = "EQhot")
+     
     })
     
     # Return updated data
     values[["EQhot"]]
     
 
-
-    
-    
   })
+  
+  
   
   # Set tie-line graph data
   myTLData <- reactive({
     
     # Call reactive function for data file, graph/clear button
     input$TLfile
+    input$EQfile
     input$graph_button
     input$clear_button
     # Call reactive function for slider inputs, set ranges for raffinate and extract
@@ -122,8 +122,8 @@ shinyServer(function(input, output, session) {
     # Initialize empty table during startup
     if(counter$j == 0){
       # Set table to default (0)
-      DF = data.frame(matrix(0.0, nrow=4, ncol=2))
-      setTable(DF, name = "TLhot")
+      DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
+      setTable(DF2, name = "TLhot")
       # Set returned graph data to default (0)
       TLData = data.frame(matrix(0.0, nrow=4, ncol=6))
       setTable(TLData, name = "TLgraph")
@@ -132,7 +132,8 @@ shinyServer(function(input, output, session) {
     
     # Check if file has been uploaded
     observeEvent(input$TLfile, priority = 1,{
-      infile <- input$TLfile
+      infile   <- input$TLfile
+      infileEQ <- input$EQfile
       #  Validate file contents
       validate(
         need(file_ext(infile$name) %in% c(
@@ -143,23 +144,33 @@ shinyServer(function(input, output, session) {
           'csv',
           'tsv'
         ), "Incorrect File Format try again!"))
+      validate(
+        need(file_ext(infileEQ$name) %in% c(
+          'text/csv',
+          'text/comma-separated-values',
+          'text/tab-separated-values',
+          'text/plain',
+          'csv',
+          'tsv'
+        ), "Incorrect File Format try again!"))
       
       # Check if data file is valid
-      if (is.null(infile)){
+      if ((is.null(infile))){
         # Set table to default (0)
-        DF = data.frame(matrix(0.0, nrow=4, ncol=2))
-        setTable(DF, name = "TLhot")
+        DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
+        setTable(DF2, name = "TLhot")
         # Set returned graph data to default (0)
         TLData = data.frame(matrix(0.0, nrow=4, ncol=6))
         setTable(TLData, name = "TLgraph")}
       else{
         # Set table to uploaded data
-        DF = read.csv(infile$datapath)
-        setTable(DF, name = "TLhot")
-        print(values[["TLhot"]])
-        # Set returned graph data to interpolated values
-        TLData = interpolateTL(values, ranges)
-        setTable(TLData, name = "TLgraph")
+         DF = read.csv(infileEQ$datapath)
+         setTable(DF, name = "EQhot")
+         DF2 = read.csv(infile$datapath)
+         setTable(DF2, name = "TLhot")
+        # Set returned graph data to interpolated valuesL(values, ranges)
+         TLData = interpolateTL(values, ranges)
+         setTable(TLData, name = "TLgraph")
         }
     })
     
@@ -168,8 +179,8 @@ shinyServer(function(input, output, session) {
       # Check if table input exists
       if (!is.null(input$TLhot)) {
         # Set graph data to current table data
-        DF = hot_to_r(input$TLhot)
-        setTable(DF, name = "TLhot")
+        DF2 = hot_to_r(input$TLhot)
+        setTable(DF2, name = "TLhot")
         # Set returned graph data to default (0)
         TLData = interpolateTL(values, ranges)
         setTable(TLData, name = "TLgraph")
@@ -179,11 +190,13 @@ shinyServer(function(input, output, session) {
     # Check if clear button has been pressed
     observeEvent(input$clear_button, priority = 1,{
       # Set table to default (0)
-      DF = data.frame(matrix(0.0, nrow=4, ncol=2))
-      setTable(DF, name = "TLhot")
+      DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
+      setTable(DF2, name = "TLhot")
       # Set returned graph data to default (0)
       TLData = data.frame(matrix(0.0, nrow=4, ncol=6))
       setTable(TLData, name = "TLgraph")
+
+    
     })
     
     # Return list of table & graph data

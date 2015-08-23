@@ -1,6 +1,3 @@
-library(shiny)
-
-
 interpolateTL <- function(values, ranges){
   
   # Normalize tie-line data
@@ -13,11 +10,9 @@ interpolateTL <- function(values, ranges){
   interTLData = data.frame(matrix(0.0, nrow = nrow(TLData), ncol = 2*ncol(EQData)))
   for(i in rows){ 
     interTLData[i,1] = TLData[i,1]
-    interTLData[i,2] = interpolate(TLData[i,1], range = ranges$R, EQData)[1]
-    interTLData[i,3] = interpolate(TLData[i,1], range = ranges$R, EQData)[2]
+    interTLData[i,2:3] = interpolate(TLData[i,1], range = ranges$R, EQData)
     interTLData[i,4] = TLData[i,2]
-    interTLData[i,5] = interpolate(TLData[i,2], range = ranges$E, EQData)[1]
-    interTLData[i,6] = interpolate(TLData[i,2], range = ranges$E, EQData)[2]
+    interTLData[i,5:6] = interpolate(TLData[i,2], range = ranges$E, EQData)
   }
   interTLData
 }

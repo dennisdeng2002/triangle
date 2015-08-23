@@ -20,13 +20,7 @@ plotit <- function(myEQData, TLData, hit) {
        aes_string(x=colnames(myEQData())[3], y=colnames(myEQData())[2], z=colnames(myEQData())[1]),
        aes_string(x=colnames(myEQData())[3], y=colnames(myEQData())[1], z=colnames(myEQData())[2])
   )
-  
-  # Render tie-lines
-  # 1 4
-  # 2 5
-  # 3 6
 
-  
   a <- a + switch(hit,
     geom_segment(data = TLData, aes_string(x=colnames(TLData)[2], y=colnames(TLData)[1], z=colnames(TLData)[3], xend=colnames(TLData)[5], yend=colnames(TLData)[4], zend=colnames(TLData)[6])),
     geom_segment(data = TLData, aes_string(x=colnames(TLData)[1], y=colnames(TLData)[2], z=colnames(TLData)[3], xend=colnames(TLData)[4], yend=colnames(TLData)[5], zend=colnames(TLData)[6])),

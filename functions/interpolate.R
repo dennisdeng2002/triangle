@@ -1,4 +1,7 @@
 interpolate <- function(x, range, myData){
+  # Initialize y and z
+  y <- seq(0,0,l=length(x))
+  z <- seq(0,0,l=length(x))
   # Set range to 1 minus inputted range
   range = seq(range[1],range[length(range)-1])
   # Generic form for a linear equation
