@@ -31,6 +31,7 @@ shinyServer(function(input, output, session) {
     input$EQfile
     input$EQgraph_button
     input$EQclear_button
+    input$submit_header_button
     
     # Initialize empty table during startup
     if(counter$i == 0){
@@ -82,6 +83,9 @@ shinyServer(function(input, output, session) {
         colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
         setTable(DF3, name = "hot")
       }
+      updateTextInput(session, "X1", value = col_head[1])
+      updateTextInput(session, "X2", value = col_head[2])
+      updateTextInput(session, "X3", value = col_head[3])
     }
   })
   
@@ -114,6 +118,42 @@ shinyServer(function(input, output, session) {
       colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
       setTable(DF3, name = "hot")
     }
+  })
+  
+  # Modal box clear button
+  observeEvent(input$clear_header_button, priority = 1,{
+    # Clear text boxes
+    updateTextInput(session, "X1", value = NULL)
+    updateTextInput(session, "X2", value = NULL)
+    updateTextInput(session, "X3", value = NULL)
+    # Extract Column Headings
+    col_head <- colnames(values[["EQhot"]])
+    # Update component names
+    updateSelectInput(session, "TLcomponent", choices = col_head)
+  })
+  
+  observeEvent(input$submit_header_button, priority = 1,{
+    X1header <- input$X1
+    X2header <- input$X2
+    X3header <- input$X3
+    DF = values[["EQhot"]]
+    if(X1header == ""){
+      X1header <- "X1" 
+    }
+    if(X2header == ""){
+      X2header <- "X2" 
+    }
+    if(X3header == ""){
+      X3header <- "X3" 
+    }
+    #update data frame
+    headernames = c(X1header, X2header, X3header)
+    colnames(DF) <- headernames
+    setTable(DF, name = "EQhot")
+    # Extract Column Headings
+    col_head <- colnames(values[["EQhot"]])
+    # Update component names
+    updateSelectInput(session, "TLcomponent", choices = col_head)
   })
   
   # Set tie-line graph data
@@ -254,6 +294,7 @@ shinyServer(function(input, output, session) {
     input$clear_button
     # Column names are dependent on equilibrium data
     input$EQclear_button
+    
     input$EQfile
     
     # Initialize empty table during startup
@@ -337,5 +378,5 @@ shinyServer(function(input, output, session) {
   observeEvent(input$axistog, {
     toggle$hit <- ((input$axistog[1]) %% 6 ) + 1
   })
-
+  
 })
