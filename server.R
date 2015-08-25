@@ -254,6 +254,7 @@ shinyServer(function(input, output, session) {
     input$clear_button
     # Column names are dependent on equilibrium data
     input$EQclear_button
+    input$EQfile
     
     # Initialize empty table during startup
     if(counter$k == 0){
