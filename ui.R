@@ -10,8 +10,8 @@ shinyUI(
     # Sidebar
     dashboardSidebar(
       sidebarMenu(
-        menuItem("LLE Data", tabName = "data", icon = icon("wheelchair")),
-        menuItem("LLE Plot", tabName = "plot", icon = icon("recycle"))
+        menuItem("LLE Data", tabName = "data", icon = icon("table")),
+        menuItem("LLE Plot", tabName = "plot", icon = icon("area-chart"))
       )),
     #   sliderInput("zoom_slider", label = "Zoom", min = 0, max = 2.0, value = 1.0, step = 0.1),
     # Generate plot
@@ -31,10 +31,19 @@ shinyUI(
                   box(
                     title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
                     collapsible = TRUE,
+                    bsModal("add_headerbox", "Header", trigger = "add_header_button",
+                            textInput(inputId="X1", label="X1", value=NULL, width="35%"),
+                            textInput(inputId="X2", label="X2", value=NULL, width="35%"),
+                            textInput(inputId="X3", label="X3", value=NULL, width="35%"),
+                            actionButton("submit_header_button", "Submit"),
+                            actionButton("clear_header_button", "Clear"),
+                            size = "small"
+                    ),
                     div(style="width: 50%; margin: 0 auto;",
                     # Upload CSV file of equilibrium data
                     fileInput("EQfile", "Upload Equilibrium Data:"),
                     # Generate equilibrium data table
+                    actionLink("add_header_button", "Change Component Names"),
                     rHandsontableOutput("EQhot"),
                     br(),
                     # Graph data table changes
