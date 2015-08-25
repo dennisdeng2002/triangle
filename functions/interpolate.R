@@ -1,7 +1,4 @@
-interpolate <- function(x, range, myData){
-  # Initialize y and z
-  y <- seq(0,0,l=length(x))
-  z <- seq(0,0,l=length(x))
+interpolate <- function(x, range, myData, x_num, y_num, z_num, session){
   # Set range to 1 minus inputted range
   range = seq(range[1],range[length(range)-1])
   # Generic form for a linear equation
@@ -14,23 +11,29 @@ interpolate <- function(x, range, myData){
   # Example: x = Acetone, y = Water, z = TCE
   for(i in range){
     # Check whether tie-line data = equilibrium data
-    if(myData[i,1] == x){
+    if(myData[i,x_num] == x){
       # Modeling water as a function of acetone
-      y <- myData[i,2]
-      z <- myData[i,3]
+      y <- myData[i,y_num]
+      z <- myData[i,z_num]
       break
     } 
     # Check whether tie-line data falls between equilibrium data
-    else if(myData[i,1] > x & x > myData[i+1,1]){
+    else if(myData[i,x_num] > x & x > myData[i+1,x_num]){
       # Modeling water as a function of acetone
-      fit <- lm(myData[(i):(i+1),2]~myData[(i):(i+1),1])
+      fit <- lm(myData[(i):(i+1),y_num]~myData[(i):(i+1),x_num])
       # Calculate theoretical water and TCE values
       y <- first_order(x, fit)
       z <- 1-y-x
       break
     } 
     else{
+      y = 0
+      z = 0
     }
+  }
+  # Create alert message for any zero/negative values
+  if(y<=0 || z<=0){
+    createAlert(session, "alert", "TLalert", content = "Potential error in tie-line interpolation.", append = FALSE)
   }
   # Return both y and z
   yz = c(y,z)
