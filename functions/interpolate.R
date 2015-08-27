@@ -12,7 +12,7 @@ interpolate <- function(x, range, myData, x_num, y_num, z_num, session){
   for(i in range){
     # Check whether tie-line data = equilibrium data
     if(myData[i,x_num] == x){
-      # Modeling water as a function of acetone
+      # Set water and TCE to equilibrium data
       y <- myData[i,y_num]
       z <- myData[i,z_num]
       break
@@ -33,7 +33,7 @@ interpolate <- function(x, range, myData, x_num, y_num, z_num, session){
   }
   # Create alert message for any zero/negative values
   if(y<=0 || z<=0){
-    createAlert(session, "alert", "TLalert", content = "Potential error in tie-line interpolation.", append = FALSE)
+    createAlert(session, "alert", "interpolateAlert", content = "Error: Tie-Line Interpolation", append = FALSE)
   }
   # Return both y and z
   yz = c(y,z)

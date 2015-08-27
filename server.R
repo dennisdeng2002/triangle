@@ -5,24 +5,27 @@ library(svgPanZoom)
 library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
+library(plotly)
 
 source("functions/interpolate.R")
 source("functions/interpolateTL.R")
 source("functions/sortDecreasing.R")
 source("functions/normalize.R")
 source("functions/plotit.R")
+source("functions/plotitRT.R")
+source("functions/checkifdecimals.R")
 
 shinyServer(function(input, output, session) {
   
   # Counter used to initialize table at startup
-  counter <- reactiveValues(i = 0, j = 0, k = 0)
+  counter <- reactiveValues(i = 0, j = 0, k = 0, l = 0)
   # Used to distinguish raffinate/extract values
   ranges <- reactiveValues(E = seq(), R = seq())
   # Update table data structure
   values = list()
   setTable = function(x, name) values[[name]] <<- x
   # Make toggle values reactive
-  toggle = reactiveValues(status = NULL, hit = 1, rowsEQ = 0)
+  toggle = reactiveValues(status = NULL, hit = 1, hitRT = 1, rowsEQ = 0)
   
   # Set equilibrium graph data
   myEQData <- reactive({
@@ -31,6 +34,8 @@ shinyServer(function(input, output, session) {
     input$EQfile
     input$EQgraph_button
     input$EQclear_button
+    input$submit_header_button
+    input$clear_header_button
     
     # Initialize empty table during startup
     if(counter$i == 0){
@@ -49,45 +54,75 @@ shinyServer(function(input, output, session) {
   # Check if file has been uploaded
   observeEvent(input$EQfile, priority = 1,{
     infile <- input$EQfile
-    #  Validate file contents
-    validate(
-      need(file_ext(infile$name) %in% c(
-        'text/csv',
-        'text/comma-separated-values',
-        'text/tab-separated-values',
-        'text/plain',
-        'csv',
-        'tsv'
-      ), "Incorrect File Format try again!"))
     # Check if data file is valid
     if (is.null(infile)){
-      return(NULL) 
+      # Set table to default (0)
+      DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+      setTable(DF, name = "EQhot")
     }
     else{
+      if(infile$type=="csv" || infile$type=="text/csv" || infile$type=='text/comma-separated-values'){
+        # Read uploaded CSV
+        DF = read.csv(infile$datapath)
+      }
+      else if(infile$type=="tsv" || infile$type=="text/tsv" || infile$type=='text/tab-separated-values'){
+        # Read uploaded TSV
+        DF = read.delim(infile$datapath)
+      }
+      else if(infile$type=="text/plain"){
+        separator = input$EQseparator
+        # Read uploaded text file
+        DF = read.table(infile$datapath, header = TRUE, sep = separator)
+        # Check if data has been read correctly
+        if(ncol(DF)!=3){
+          toggleModal(session, "EQtextfile_box", toggle = "toggle")
+          # Set table to default (0)
+          DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+          # Clear uploaded file
+          session$sendCustomMessage(type = "resetFileInputHandler", 'EQfile')
+        }
+      }
+      else{
+        # Set table to default (0)
+        DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+      }
       # Set table to uploaded data
-      DF = read.csv(infile$datapath)
       setTable(DF, name = "EQhot")
       # Update sliders based on number of equilibrium points (initial estimate)
-      updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,nrow(DF)/2))
-      updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c((nrow(DF)/2)+1,nrow(DF)))
+      updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,floor(nrow(DF)/2)))
+      updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c(floor(nrow(DF)/2)+1,nrow(DF)))
       # Extract Column Headings
       col_head <- colnames(myEQData())
       toggle$on <- TRUE
       toggle$rowsEQ <- nrow(myEQData())
       # Update component names
       updateSelectInput(session, "TLcomponent", choices = col_head)
+      # Set header for additional data (ternary)
       DF3 = values[["hot"]]
       col_head = colnames(DF)
       if(!is.null(colnames(DF3))){
         colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
         setTable(DF3, name = "hot")
       }
+      # Set header for additional data (right triangular)
+      DF4 = values[["RThot"]]
+      if(!is.null(colnames(DF4))){
+        colnames(DF4) <- c(col_head[1], col_head[2], "Label")
+        setTable(DF4, name = "RThot")
+      }
+      # Update component names (in link above equilibrium table)
+      updateTextInput(session, "X1", value = col_head[1])
+      updateTextInput(session, "X2", value = col_head[2])
+      updateTextInput(session, "X3", value = col_head[3])
+      # Update right triangle component choices
+      updateSelectInput(session, "component1", choices = colnames(values[["EQhot"]]), selected = colnames(values[["EQhot"]])[1])
+      updateSelectInput(session, "component2", choices = colnames(values[["EQhot"]]), selected = colnames(values[["EQhot"]])[2])
     }
   })
   
   # Check if graph button has been pressed
   observeEvent(input$EQgraph_button, priority = 1,{
-    # Check if table input exists
+    # Check if table input changes
     if (!is.null(input$EQhot)) {
       # Set graph data to current table data
       DF = hot_to_r(input$EQhot)
@@ -104,7 +139,9 @@ shinyServer(function(input, output, session) {
     updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,5))
     updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c(6,10))
     # Close any alerts
-    closeAlert(session, "TLalert")
+    closeAlert(session, "interpolateAlert")
+    closeAlert(session, "sliderAlert")
+    closeAlert(session, "EQfileAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", 'EQfile')
     # Reset column names for additional data
@@ -114,6 +151,60 @@ shinyServer(function(input, output, session) {
       colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
       setTable(DF3, name = "hot")
     }
+    # Update component names (in link above equilibrium table)
+    updateTextInput(session, "X1", value = "")
+    updateTextInput(session, "X2", value = "")
+    updateTextInput(session, "X3", value = "")
+    # Update right triangle component choices
+    updateSelectInput(session, "component1", choices = colnames(values[["EQhot"]]), selected = colnames(values[["EQhot"]])[1])
+    updateSelectInput(session, "component2", choices = colnames(values[["EQhot"]]), selected = colnames(values[["EQhot"]])[2])
+  })
+  
+  # Modal box clear button
+  observeEvent(input$clear_header_button, priority = 1,{
+    # Clear text boxes
+    updateTextInput(session, "X1", value = "")
+    updateTextInput(session, "X2", value = "")
+    updateTextInput(session, "X3", value = "")
+    DF = values[["EQhot"]]
+    col_head <- c("X1", "X2", "X3")
+    colnames(DF) <- col_head
+    setTable(DF, name = "EQhot")
+    # Update component names
+    updateSelectInput(session, "TLcomponent", choices = col_head)
+    updateSelectInput(session, "component1", choices = col_head, selected = col_head[1])
+    updateSelectInput(session, "component2", choices = col_head, selected = col_head[2])
+  })
+  
+  # Modal box submit button
+  observeEvent(input$submit_header_button, priority = 1,{
+    # Store inputs
+    X1 <- input$X1
+    X2 <- input$X2
+    X3 <- input$X3
+    # Store current equilibrium data
+    DF = values[["EQhot"]]
+    # Check if inputs are empty
+    if(X1 == ""){
+      X1 <- "X1" 
+    }
+    if(X2 == ""){
+      X2 <- "X2" 
+    }
+    if(X3 == ""){
+      X3 <- "X3" 
+    }
+    # Set header names for equilibrium data to inputs
+    headernames = c(X1, X2, X3)
+    colnames(DF) <- headernames
+    # Update global equilibrium data
+    setTable(DF, name = "EQhot")
+    # Extract Column Headings
+    col_head <- colnames(values[["EQhot"]])
+    # Update component names
+    updateSelectInput(session, "TLcomponent", choices = col_head)
+    updateSelectInput(session, "component1", choices = col_head, selected = col_head[1])
+    updateSelectInput(session, "component2", choices = col_head, selected = col_head[2])
   })
   
   # Set tie-line graph data
@@ -124,6 +215,7 @@ shinyServer(function(input, output, session) {
     input$EQfile
     input$TLgraph_button
     input$TLclear_button
+    input$setRanges_button
     # Call reactive function for slider inputs, set ranges for raffinate and extract
     Raf <- input$raffinate
     Ext <- input$extract
@@ -152,28 +244,14 @@ shinyServer(function(input, output, session) {
     infile   <- input$TLfile
     infileEQ <- input$EQfile
     component <- input$TLcomponent
-    #  Validate file contents
-    validate(
-      need(file_ext(infile$name) %in% c(
-        'text/csv',
-        'text/comma-separated-values',
-        'text/tab-separated-values',
-        'text/plain',
-        'csv',
-        'tsv'
-      ), "Incorrect File Format try again!"))
-    validate(
-      need(file_ext(infileEQ$name) %in% c(
-        'text/csv',
-        'text/comma-separated-values',
-        'text/tab-separated-values',
-        'text/plain',
-        'csv',
-        'tsv'
-      ), "Incorrect File Format try again!"))
-    
-    # Check if data file is valid
-    if ((is.null(infile))){
+    if(is.null(infileEQ)){
+      # Equilibrium file error message
+      createAlert(session, "alert", "EQfileAlert", content = "Error: Equilibrium Data Has Not Been Uploaded", append = FALSE)
+      # Clear uploaded file
+      session$sendCustomMessage(type = "resetFileInputHandler", 'TLfile')
+    }
+    # Check if tie-line data file is valid
+    else if ((is.null(infile))){
       # Set table to default (0)
       DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
       colnames(DF2) <- c("Raffinate", "Extract")
@@ -182,25 +260,63 @@ shinyServer(function(input, output, session) {
       TLData = data.frame(matrix(0.0, nrow=4, ncol=6))
       setTable(TLData, name = "TLgraph")}
     else{
+      if(infile$type=="csv" || infile$type=="text/csv" || infile$type=='text/comma-separated-values'){
+        # Read uploaded CSV
+        DF2 = read.csv(infile$datapath)
+      }
+      else if(infile$type=="tsv" || infile$type=="text/tsv" || infile$type=='text/tab-separated-values'){
+        # Read uploaded TSV
+        DF2 = read.delim(infile$datapath)
+      }
+      else if(infile$type=="text/plain"){
+        separator = input$TLseparator
+        # Read uploaded text file
+        DF2 = read.table(infile$datapath, header = TRUE, sep = separator)
+        # Check if data has been read correctly
+        if(ncol(DF2)!=2){
+          toggleModal(session, "TLtextfile_box", toggle = "toggle")
+          # Set table to default (0)
+          DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
+          # Clear uploaded file
+          session$sendCustomMessage(type = "resetFileInputHandler", 'TLfile')
+        }
+      }
+      else{
+        # Set table to default (0)
+        DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
+      }
       # Set table to uploaded data
-      DF = read.csv(infileEQ$datapath)
-      setTable(DF, name = "EQhot")
-      DF2 = read.csv(infile$datapath)
       setTable(DF2, name = "TLhot")
-      # Set returned graph data to interpolated values
-      TLData = interpolateTL(values, ranges, component, session)
-      setTable(TLData, name = "TLgraph")
+      # Check if DF2 has same dimensions as default
+      if(nrow(DF2)==4 && ncol(DF2)==2){
+        # If DF2 is not the default data frame
+        if(DF2 != data.frame(matrix(0.0, nrow=4, ncol=2))){
+          # Set returned graph data to interpolated values
+          TLData = interpolateTL(values, ranges, component, session)
+          setTable(TLData, name = "TLgraph")
+        }
+      }
+      else{
+        # Set returned graph data to interpolated values
+        TLData = interpolateTL(values, ranges, component, session)
+        setTable(TLData, name = "TLgraph")
+      }
     }
   })
   
   # Check if graph button has been pressed
   observeEvent(input$TLgraph_button, priority = 1,{
     component <- input$TLcomponent
-    # Check if table input exists
+    # Check if table input changes
     if (!is.null(input$TLhot)) {
       # Set graph data to current table data
       DF2 = hot_to_r(input$TLhot)
       setTable(DF2, name = "TLhot")
+      # Set returned graph data to interpolated values
+      TLData = interpolateTL(values, ranges, component, session)
+      setTable(TLData, name = "TLgraph")
+    }
+    else{
       # Set returned graph data to interpolated values
       TLData = interpolateTL(values, ranges, component, session)
       setTable(TLData, name = "TLgraph")
@@ -217,33 +333,119 @@ shinyServer(function(input, output, session) {
     TLData = data.frame(matrix(0.0, nrow=4, ncol=6))
     setTable(TLData, name = "TLgraph")
     # Close any alerts
-    closeAlert(session, "TLalert")
+    closeAlert(session, "interpolateAlert")
+    closeAlert(session, "sliderAlert")
+    closeAlert(session, "EQfileAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", 'TLfile')
   })
   
-  # Check if switch button has been pressed
-  observeEvent(input$switch_button, priority = 1,{
-    toggle <- input$switch_button
+  # Check if set button has been pressed
+  observeEvent(input$setRanges_button, priority = 1,{
+    Raf <- input$raffinate
+    Ext <- input$extract
     component <- input$TLcomponent
-    DF = values[["EQhot"]]
-    # Check if switch button has been pressed (initial value = 0)
-    if((toggle%%2)!=0){
-      # Switch raffinate with extract (based on initial ranges)
-      updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c(1,nrow(DF)/2))
-      updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c((nrow(DF)/2)+1,nrow(DF)))
-      ranges$E <- seq(1,nrow(DF)/2)
-      ranges$R <- seq((nrow(DF)/2)+1,nrow(DF))
-    }
-    else{
-      updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,nrow(DF)/2))
-      updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c((nrow(DF)/2)+1,nrow(DF)))
-      ranges$R <- seq(1,nrow(DF)/2)
-      ranges$E <- seq((nrow(DF)/2)+1,nrow(DF))
-    }
+    # Set reactive ranges
+    ranges$R <- seq(Raf[1],Raf[2])
+    ranges$E <- seq(Ext[1],Ext[2])
     # Set returned graph data to interpolated values
     TLData = interpolateTL(values, ranges, component, session)
     setTable(TLData, name = "TLgraph")
+  })
+  
+  # Check if switch button has been pressed
+  observeEvent(input$switchRanges_button, priority = 1,{
+    component <- input$TLcomponent
+    DF = values[["EQhot"]]
+    # Store slider values and ranges as temporary values
+    tempRaf = input$raffinate
+    tempExt = input$extract
+    tempR = ranges$R
+    tempE = ranges$E
+    # Update sliders
+    updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = tempRaf)
+    updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = tempExt)
+    # Update ranges
+    ranges$R <- tempE
+    ranges$E <- tempR
+  })
+  
+  # Check if raffinate slider has been changed
+  observeEvent(input$raffinate, priority = 1,{
+    Raf <- input$raffinate
+    Ext <- input$extract
+    # Check if raffinate has been set incorrectly (greater than max, overlapping)
+    if(Raf[2]==Ext[2] || Raf[1]==Ext[1]){
+      if(!is.null(values[["EQhot"]])){
+        DF = values[["EQhot"]]
+        # Update sliders based on number of equilibrium points (initial estimate)
+        updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,nrow(DF)/2))
+        updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c((nrow(DF)/2)+1,nrow(DF)))
+      }
+      else{
+        # Update sliders to default
+        updateSliderInput(session, "raffinate", min = 1, max = 10, value = c(1,5))
+        updateSliderInput(session, "extract", min = 1, max = 10, value = c(6,10))
+      }
+      # Slider error message
+      createAlert(session, "alert", "sliderAlert", content = "Error: Incorrect Slider Setting", append = FALSE)
+    }
+    # Change extract based on how much user changes raffinate slider
+    else if(Raf[2]>Ext[2]){
+      maxvalue = Raf[2]
+      Ext <- c(Ext[1],Raf[1]-1)
+      # Update extract
+      updateSliderInput(session, "extract", value = Ext)
+      # Update extract range
+      ranges$E <- seq(Ext[1],Ext[2])
+    }
+    else if(Raf[2]<Ext[2]){
+      maxvalue = Ext[2]
+      Ext <- c(Raf[2]+1,maxvalue)
+      # Update extract
+      updateSliderInput(session, "extract", value = Ext)
+      # Update extract range
+      ranges$E <- seq(Ext[1],Ext[2])
+    }
+  })
+  
+  # Check if extract slider has been changed
+  observeEvent(input$extract, priority = 1,{
+    Raf <- input$raffinate
+    Ext <- input$extract
+    # Check if extract has been set incorrectly (greater than max, overlapping)
+    if(Ext[2]==Raf[2] || Ext[1]==Raf[1]){
+      if(!is.null(values[["EQhot"]])){
+        DF = values[["EQhot"]]
+        # Update sliders based on number of equilibrium points (initial estimate)
+        updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,nrow(DF)/2))
+        updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c((nrow(DF)/2)+1,nrow(DF)))
+      }
+      else{
+        # Update sliders to default
+        updateSliderInput(session, "raffinate", min = 1, max = 10, value = c(1,5))
+        updateSliderInput(session, "extract", min = 1, max = 10, value = c(6,10))
+      }
+      # Slider Error Message
+      createAlert(session, "alert", "sliderAlert", content = "Error: Incorrect Slider Setting", append = FALSE)
+    }
+    # Change raffinate based on how much user changes extract slider
+    else if(Ext[2]>Raf[2]){
+      maxvalue = Ext[2]
+      Raf <- c(Raf[1],Ext[1]-1)
+      # Update extract
+      updateSliderInput(session, "raffinate", value = Raf)
+      # Update extract range
+      ranges$R <- seq(Raf[1],Raf[2])
+    }
+    else if(Ext[2]<Raf[2]){
+      maxvalue = Raf[2]
+      Raf <- c(Ext[2]+1,maxvalue)
+      # Update extract
+      updateSliderInput(session, "raffinate", value = Raf)
+      # Update extract range
+      ranges$R <- seq(Raf[1],Raf[2])
+    }
   })
 
   # Set additional graph data
@@ -253,7 +455,10 @@ shinyServer(function(input, output, session) {
     input$graph_button
     input$clear_button
     # Column names are dependent on equilibrium data
+    input$EQfile
     input$EQclear_button
+    input$submit_header_button
+    input$clear_header_button
     
     # Initialize empty table during startup
     if(counter$k == 0){
@@ -291,6 +496,90 @@ shinyServer(function(input, output, session) {
     setTable(DF3, name = "hot")
   })
   
+  # Set additional graph data
+  myRTData <- reactive({
+    # Call reactive function for graph/clear button
+    input$RTgraph_button
+    input$RTclear_button
+    # Column names are dependent on equilibrium data/component choice
+    input$EQfile
+    input$EQclear_button
+    input$component1
+    input$component2
+    input$submit_header_button
+    input$clear_header_button
+    
+    # Initialize empty table during startup
+    if(counter$l == 0){
+      # Set table to default (0)
+      DF4 = data.frame(matrix(0.0, nrow=4, ncol=3))
+      DF4[3] = c("","","","")
+      # Get header names from equlibrium data
+      col_head = colnames(values[["EQhot"]])
+      colnames(DF4) <- c(col_head[1], col_head[2], "Label")
+      setTable(DF4, name = "RThot")
+      counter$l = isolate(counter$l) + 1
+    }
+    
+    # Return data
+    values[["RThot"]]
+  })
+  
+  # Check if graph button has been pressed
+  observeEvent(input$RTgraph_button, priority = 1,{
+    # Check if table input exists
+    if (!is.null(input$RThot)) {
+      # Set graph data to current table data
+      DF4 = hot_to_r(input$RThot)
+      setTable(DF4, name = "RThot")
+    }
+  })
+  
+  # Check if clear button has been pressed
+  observeEvent(input$RTclear_button, priority = 1,{
+    # Set table to default (0)
+    DF4 = data.frame(matrix(0.0, nrow=4, ncol=3))
+    DF4[3] = c("","","","")
+    colnames(DF4) <- c(input$component1, input$component2, "Label")
+    setTable(DF4, name = "RThot")
+  })
+  
+  # Check if component1 has been changed
+  observeEvent(input$component1, priority = 1,{
+    # Set table to default (0)
+    DF4 = values[["RThot"]]
+    # Get header names from equlibrium data
+    col_head = colnames(values[["EQhot"]])
+    # Null at startup
+    if(is.null(DF4)){
+      # Set table to default (0)
+      DF4 = data.frame(matrix(0.0, nrow=4, ncol=3))
+      DF4[3] = c("","","","")
+      colnames(DF4) <- c(col_head[1], col_head[2], "Label")
+      setTable(DF4, name = "RThot")
+    }
+    colnames(DF4)[1] <- input$component1
+    setTable(DF4, name = "RThot")
+  })
+  
+  # Check if component2 has been changed
+  observeEvent(input$component2, priority = 1,{
+    # Set table to default (0)
+    DF4 = values[["RThot"]]
+    # Get header names from equlibrium data
+    col_head = colnames(values[["EQhot"]])
+    # Null at startup
+    if(is.null(DF4)){
+      # Set table to default (0)
+      DF4 = data.frame(matrix(0.0, nrow=4, ncol=3))
+      DF4[3] = c("","","","")
+      colnames(DF4) <- c(col_head[1], col_head[2], "Label")
+      setTable(DF4, name = "RThot")
+    }
+    colnames(DF4)[2] <- input$component2
+    setTable(DF4, name = "RThot")
+  })
+  
   # Generate ternary plot
   output$TernPlot <- renderSvgPanZoom({
     # Extract data from myTLData() as a data frame instead of a list value
@@ -302,10 +591,52 @@ shinyServer(function(input, output, session) {
     # svgPanZoom(gg, controlIconsEnabled = TRUE)
     
     # Faster loading time - only works with renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
-    svgPanZoom(svgPlot(show(gg), addInfo = F), panEnabled = FALSE, zoomEnabled = FALSE)
+    svgPanZoom(svgPlot(show(gg), addInfo = F), panEnabled = FALSE, zoomEnabled = FALSE, dblClickZoomEnabled = FALSE, mouseWheelZoomEnabled = FALSE)
     
     # Non SVG plot - renderPlot/plotOutput (mouse events)
     # gg
+  })
+  
+  # Download ternary plot
+  output$download <- downloadHandler(
+    # Combine names of all components
+    filename = function() {paste(paste(colnames(myEQData())[1], colnames(myEQData())[2], colnames(myEQData())[3], sep = "-"), '.pdf', sep='')},
+    content = function(file) {
+      # Generate graph
+      TLData <- as.data.frame(myTLData()[1])
+      gg <- plotit(myEQData, TLData, myData, toggle$hit)
+      # Save as pdf
+      pdf(file)
+      print(gg)
+      dev.off()
+    }
+  )
+  
+  # Generate right triangular plot
+  output$RightPlot <- renderPlot({
+    gg <- plotitRT(myEQData, myRTData, input$component1, input$component2, toggle$hitRT, session)
+    gg
+  })
+
+  # Download right triangular plot
+  output$RTdownload <- downloadHandler(
+    # Combine names of selected components
+    filename = function() {paste(paste(input$component1, input$component2, sep = "-"), '.pdf', sep='')},
+    content = function(file) {
+      # Generate graph
+      gg <- plotitRT(myEQData, myRTData, input$component1, input$component2, toggle$hitRT, session)
+      # Save as pdf
+      pdf(file)
+      print(gg)
+      dev.off()
+    }
+  )
+  
+  # Generate right triangular plot (plotly)
+  output$RightPlotly <- renderPlotly({
+    gg <- plotitRT(myEQData, myRTData, input$component1, input$component2, toggle$hitRT, session)
+    p <- ggplotly(gg)
+    p
   })
   
   # Render equilibrium data table
@@ -322,9 +653,15 @@ shinyServer(function(input, output, session) {
       hot_table(highlightCol = TRUE, highlightRow = TRUE)
   })
   
-  # Render data table
+  # Render data table for additional points (ternary)
   output$hot <- renderRHandsontable({
     rhandsontable(myData(), stretchH = "none") %>%
+      hot_table(highlightCol = TRUE, highlightRow = TRUE)
+  })
+  
+  # Render data table for additional points (right triangular)
+  output$RThot <- renderRHandsontable({
+    rhandsontable(myRTData(), stretchH = "none") %>%
       hot_table(highlightCol = TRUE, highlightRow = TRUE)
   })
  
@@ -335,6 +672,9 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'fileUploaded', suspendWhenHidden=FALSE)
   observeEvent(input$axistog, {
     toggle$hit <- ((input$axistog[1]) %% 6 ) + 1
+  })
+  observeEvent(input$axistogRT, {
+    toggle$hitRT <- ((input$axistogRT[1]) %% 2 ) + 1
   })
 
 })
