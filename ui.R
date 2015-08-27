@@ -12,12 +12,8 @@ shinyUI(
     dashboardSidebar(
       sidebarMenu(
         menuItem("LLE Data", tabName = "data", icon = icon("table")),
-<<<<<<< HEAD
         menuItem("Ternary Plot", tabName = "Tplot", icon = icon("area-chart")),
         menuItem("Right Triangular Plot", tabName = "RTplot", icon = icon("area-chart"))
-=======
-        menuItem("LLE Plot", tabName = "plot", icon = icon("area-chart"))
->>>>>>> a48e1ecabd9d9036124ce8ac9b2e75ba301b9e41
       )),
     #   sliderInput("zoom_slider", label = "Zoom", min = 0, max = 2.0, value = 1.0, step = 0.1),
     # Generate plot
@@ -37,17 +33,10 @@ shinyUI(
                   box(
                     title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
                     collapsible = TRUE,
-<<<<<<< HEAD
                     bsModal("add_headerbox", "Component Names", trigger = "add_header_link",
                             textInput(inputId="X1", label="X1", value="", width="50%"),
                             textInput(inputId="X2", label="X2", value="", width="50%"),
                             textInput(inputId="X3", label="X3", value="", width="50%"),
-=======
-                    bsModal("add_headerbox", "Header", trigger = "add_header_button",
-                            textInput(inputId="X1", label="X1", value=NULL, width="35%"),
-                            textInput(inputId="X2", label="X2", value=NULL, width="35%"),
-                            textInput(inputId="X3", label="X3", value=NULL, width="35%"),
->>>>>>> a48e1ecabd9d9036124ce8ac9b2e75ba301b9e41
                             actionButton("submit_header_button", "Submit"),
                             actionButton("clear_header_button", "Clear"),
                             size = "small"
@@ -76,7 +65,6 @@ shinyUI(
                     # Used to open header modal
                     actionLink("add_header_link", "Change Component Names"),
                     # Generate equilibrium data table
-                    actionLink("add_header_button", "Change Component Names"),
                     rHandsontableOutput("EQhot"),
                     br(),
                     # Graph data table changes
