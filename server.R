@@ -35,7 +35,10 @@ shinyServer(function(input, output, session) {
     input$EQgraph_button
     input$EQclear_button
     input$submit_header_button
+<<<<<<< HEAD
     input$clear_header_button
+=======
+>>>>>>> a48e1ecabd9d9036124ce8ac9b2e75ba301b9e41
     
     # Initialize empty table during startup
     if(counter$i == 0){
@@ -104,6 +107,7 @@ shinyServer(function(input, output, session) {
         colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
         setTable(DF3, name = "hot")
       }
+<<<<<<< HEAD
       # Set header for additional data (right triangular)
       DF4 = values[["RThot"]]
       if(!is.null(colnames(DF4))){
@@ -117,6 +121,11 @@ shinyServer(function(input, output, session) {
       # Update right triangle component choices
       updateSelectInput(session, "component1", choices = colnames(values[["EQhot"]]), selected = colnames(values[["EQhot"]])[1])
       updateSelectInput(session, "component2", choices = colnames(values[["EQhot"]]), selected = colnames(values[["EQhot"]])[2])
+=======
+      updateTextInput(session, "X1", value = col_head[1])
+      updateTextInput(session, "X2", value = col_head[2])
+      updateTextInput(session, "X3", value = col_head[3])
+>>>>>>> a48e1ecabd9d9036124ce8ac9b2e75ba301b9e41
     }
   })
   
@@ -205,6 +214,42 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, "TLcomponent", choices = col_head)
     updateSelectInput(session, "component1", choices = col_head, selected = col_head[1])
     updateSelectInput(session, "component2", choices = col_head, selected = col_head[2])
+  })
+  
+  # Modal box clear button
+  observeEvent(input$clear_header_button, priority = 1,{
+    # Clear text boxes
+    updateTextInput(session, "X1", value = NULL)
+    updateTextInput(session, "X2", value = NULL)
+    updateTextInput(session, "X3", value = NULL)
+    # Extract Column Headings
+    col_head <- colnames(values[["EQhot"]])
+    # Update component names
+    updateSelectInput(session, "TLcomponent", choices = col_head)
+  })
+  
+  observeEvent(input$submit_header_button, priority = 1,{
+    X1header <- input$X1
+    X2header <- input$X2
+    X3header <- input$X3
+    DF = values[["EQhot"]]
+    if(X1header == ""){
+      X1header <- "X1" 
+    }
+    if(X2header == ""){
+      X2header <- "X2" 
+    }
+    if(X3header == ""){
+      X3header <- "X3" 
+    }
+    #update data frame
+    headernames = c(X1header, X2header, X3header)
+    colnames(DF) <- headernames
+    setTable(DF, name = "EQhot")
+    # Extract Column Headings
+    col_head <- colnames(values[["EQhot"]])
+    # Update component names
+    updateSelectInput(session, "TLcomponent", choices = col_head)
   })
   
   # Set tie-line graph data
@@ -460,6 +505,8 @@ shinyServer(function(input, output, session) {
     input$submit_header_button
     input$clear_header_button
     
+    input$EQfile
+    
     # Initialize empty table during startup
     if(counter$k == 0){
       # Set table to default (0)
@@ -673,8 +720,12 @@ shinyServer(function(input, output, session) {
   observeEvent(input$axistog, {
     toggle$hit <- ((input$axistog[1]) %% 6 ) + 1
   })
+<<<<<<< HEAD
   observeEvent(input$axistogRT, {
     toggle$hitRT <- ((input$axistogRT[1]) %% 2 ) + 1
   })
 
+=======
+  
+>>>>>>> a48e1ecabd9d9036124ce8ac9b2e75ba301b9e41
 })
