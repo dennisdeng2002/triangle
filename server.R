@@ -49,16 +49,6 @@ shinyServer(function(input, output, session) {
       counter$i = isolate(counter$i) + 1
     }
     
-    # If only two data columns are given calculate third data column
-    if(ncol(values[["EQhot"]])==2){
-      DF = values[["EQhot"]]
-      DF[3] = 1 - DF[2] - DF[1]
-      colnames(DF)[3] <- "X3"
-      setTable(DF, name = "EQhot")
-      # Incorrect data format error message
-      createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
-    }
-    
     # Return updated data
     values[["EQhot"]]
   })
@@ -103,20 +93,27 @@ shinyServer(function(input, output, session) {
         # Set table to default (0)
         DF = data.frame(matrix(0.0, nrow=10, ncol=3))
       }
+      # If only two data columns are given calculate third data column
+      if(ncol(DF)==2){
+        DF[3] = 1 - DF[2] - DF[1]
+        # Set third column to X3
+        colnames(DF)[3] <- "X3"
+        # Incorrect data format error message
+        createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
+      }
       # Set table to uploaded data
       setTable(DF, name = "EQhot")
       # Update sliders based on number of equilibrium points (initial estimate)
       updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,floor(nrow(DF)/2)))
       updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c(floor(nrow(DF)/2)+1,nrow(DF)))
       # Extract Column Headings
-      col_head <- colnames(myEQData())
+      col_head <- colnames(values[["EQhot"]])
       toggle$on <- TRUE
-      toggle$rowsEQ <- nrow(myEQData())
+      toggle$rowsEQ <- nrow(values[["EQhot"]])
       # Update component names
       updateSelectInput(session, "TLcomponent", choices = col_head)
       # Set header for additional data (ternary)
       DF3 = values[["hot"]]
-      col_head = colnames(DF)
       if(!is.null(colnames(DF3))){
         colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
         setTable(DF3, name = "hot")
@@ -627,7 +624,6 @@ shinyServer(function(input, output, session) {
     TLData <- as.data.frame(myTLData()[1])
     # Render ternary diagram
     gg <- plotit(myEQData(), TLData, myData(), toggle$hit, myTheme())
-    
     # Works with both renderPlot/plotOutput (mouse events) and renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
     # svgPanZoom(gg, controlIconsEnabled = TRUE)
     
