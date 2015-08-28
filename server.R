@@ -29,7 +29,7 @@ shinyServer(function(input, output, session) {
   # Make toggle values reactive
   toggle = reactiveValues(status = NULL, hit = 1, hitRT = 1, rowsEQ = 0)
   # Counter for adding points interactively 
-  addcounter <- reactiveValues(RT = 1)
+  addcounter <- reactiveValues(point = 1, x = 1, y = 2)
   
   # Set equilibrium graph data
   myEQData <- reactive({
@@ -754,12 +754,14 @@ shinyServer(function(input, output, session) {
     coord <- input$RTplot_dblclick
     DF4 <- values[["RThot"]]
     rows = nrow(DF4)
-    DF4[addcounter$RT,1] <- coord$x
-    DF4[addcounter$RT,2] <- coord$y
-    if(addcounter$RT==rows){
-      addcounter$RT <- 1
+    # Allows user to still double click before toggle is enabled
+    DF4[addcounter$point,addcounter$x] <- coord$x
+    DF4[addcounter$point,addcounter$y] <- coord$y
+    # Cycles through all points
+    if(addcounter$point==rows){
+      addcounter$point <- 1
     }
-    else{addcounter$RT <- addcounter$RT + 1}
+    else{addcounter$point <- addcounter$point + 1}
     setTable(DF4, name = "RThot")
   })
  
@@ -773,6 +775,13 @@ shinyServer(function(input, output, session) {
   })
   observeEvent(input$axistogRT, {
     toggle$hitRT <- ((input$axistogRT[1]) %% 2 ) + 1
+    # Switch coordinate system for double click point addition
+    switch(((input$axistogRT[1]) %% 2 ) + 1,
+           {addcounter$x <- 1
+           addcounter$y <- 2},
+           {addcounter$x <- 2
+           addcounter$y <- 1}
+    )
   })
 
 })
