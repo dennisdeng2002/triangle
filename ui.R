@@ -7,17 +7,19 @@ library(plotly)
 
 shinyUI(
   dashboardPage(
-    dashboardHeader(title = "LLE"),
+    dashboardHeader(title = "Liquid-Liquid Extraction"),
     # Sidebar
     dashboardSidebar(
       sidebarMenu(
         menuItem("LLE Data", tabName = "data", icon = icon("table")),
         menuItem("Ternary Plot", tabName = "Tplot", icon = icon("area-chart")),
-        menuItem("Right Triangular Plot", tabName = "RTplot", icon = icon("area-chart"))
+        menuItem("Right Triangular Plot", tabName = "RTplot", icon = icon("area-chart")),
+        menuItem("Guide", tabName = "guide", icon = icon("question"))
       )),
-    #   sliderInput("zoom_slider", label = "Zoom", min = 0, max = 2.0, value = 1.0, step = 0.1),
     # Generate plot
     dashboardBody(
+      # Alter header font
+      tags$head(tags$style(HTML('.main-header .logo {font-size: 18px;}'))),
       tabItems(
         tabItem(tabName = "data",
                 tags$script('
@@ -49,7 +51,11 @@ shinyUI(
                       'text/tab-separated-values',
                       'text/plain',
                       'csv',
-                      'tsv'
+                      'tsv',
+                      'application/vnd.ms-excel',
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      '.xls',
+                      '.xlsx'
                     )),
                     # Set delimiter for equilibrium data (only triggered when user uploads text file)
                     bsModal("EQtextfile_box", "Error: Incorrect Delimiter", trigger = NULL,
@@ -70,7 +76,9 @@ shinyUI(
                     # Graph data table changes
                     actionButton("EQgraph_button","Graph"),
                     # Clear table/plot
-                    actionButton("EQclear_button","Clear"))),
+                    actionButton("EQclear_button","Clear"),
+                    # Download data file
+                    downloadButton("EQData_download", label = NULL, class = NULL))),
                   
                   box(
                     title = "Tie-Line Data", status = "primary", solidHeader = TRUE,
@@ -83,7 +91,11 @@ shinyUI(
                       'text/tab-separated-values',
                       'text/plain',
                       'csv',
-                      'tsv'
+                      'tsv',
+                      'application/vnd.ms-excel',
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      '.xls',
+                      '.xlsx'
                     )),
                     # Set delimiter for equilibrium data (only triggered when user uploads text file)
                     bsModal("TLtextfile_box", "Error: Incorrect Delimiter", trigger = NULL,
@@ -103,7 +115,10 @@ shinyUI(
                     # Graph data table changes
                     actionButton("TLgraph_button","Graph"),
                     # Clear table/plot
-                    actionButton("TLclear_button","Clear")), width = 5),
+                    actionButton("TLclear_button","Clear"),
+                    # Download data file
+                    downloadButton("TLData_download", label = NULL, class = NULL)),
+                    width = 5),
                   
                   box(
                     title = "Raffinate/Extract Ranges", status = "primary", solidHeader = TRUE,
@@ -111,7 +126,7 @@ shinyUI(
                     sliderInput("raffinate", label = "Raffinate", min = 1, max = 10, value = c(1,5)),
                     sliderInput("extract", label = "Extract", min = 1, max = 10, value = c(6,10)),
                     div(style="width: 50%; margin: 0 auto;",
-                    bsButton("setRanges_button", "Set Ranges", type = "action", block = FALSE),
+                    actionButton("setRanges_button", "Set Ranges"),
                     bsButton("switchRanges_button", "Switch", type = "action", block = FALSE, icon = icon("arrows-v"))), width = 5)
                 )
         ),
@@ -131,6 +146,12 @@ shinyUI(
                             size = "small"
                             ),
                     bsModal("tern_theme_box", "Graph Elements", trigger = "tern_theme_button",
+                            # Resize numericInput boxes
+                            tags$head(tags$style(HTML("input[type=\"number\"] {width: 125px;}"))),
+                            numericInput("pointsize", "Point Size", value = 1.5, min = 0.5, max = 3, step = 0.25),
+                            numericInput("linethickness", "Tie-Line Thickness", value = 0.5, min = 0.1, max = 1, step = 0.1),
+                            radioButtons("overalltheme", "Overall Theme", choices = c("Gray" = "Gray", "B/W" = "B/W", "RGB" = "RGB"), selected = "Gray", width = "125px"),
+                            actionLink("default_link", 'Defaults'),
                             size = "small"
                     ),
                     bsButton("tern_add_button", label = NULL, icon = icon("plus")),
@@ -143,10 +164,11 @@ shinyUI(
                 fluidRow(
                   box(
                     div(style="width: 50%; margin: 0 auto;",
-                        plotOutput("RightPlot", height = "500px", width = "500px")),
+                        plotOutput("RightPlot", height = "500px", width = "500px", dblclick = "RTplot_dblclick")),
                     # Toggle
                     conditionalPanel("output.fileUploaded", actionLink("axistogRT", "Toggle Axis Display")),
                     bsModal("right_add_box", "Additional Data Points", trigger = "right_add_button",
+                            p("Double Click Plot to Add Points"),
                             # Generate data table
                             rHandsontableOutput("RThot"),
                             br(),
@@ -160,6 +182,17 @@ shinyUI(
                             size = "small"
                     ),
                     bsModal("right_theme_box", "Graph Elements", trigger = "right_theme_button",
+                            # Resize numericInput boxes
+                            tags$head(tags$style(HTML("input[type=\"number\"] {width: 125px;}"))),
+                            numericInput("RTpointsize", "Point Size", value = 1.5, min = 0.5, max = 3, step = 0.25),
+                            numericInput("RTlinethickness", "Tie-Line Thickness", value = 0.5, min = 0.1, max = 1, step = 0.1),
+                            selectInput("RToveralltheme", "Overall Theme",
+                                        choices = c("Gray" = "Gray", "B/W" = "B/W", "Calc" = "Calc", "Economist" = "Economist",
+                                                    "Excel" = "Excel", "Few" = "Few", "Google Docs" = "Google Docs", "Highcharts" = "Highcharts",
+                                                    "Pander" = "Pander", "Solarized" = "Solarized", "Stata" = "Stata", 
+                                                    "Tufte" = "Tufte", "WSJ" = "WSJ"),
+                                        selected = "Gray", width = "125px"),
+                            actionLink("RTdefault_link", 'Defaults'),
                             size = "small"
                     ),
                     bsModal("plotly_box", title = NULL, trigger = "plotly_button",
@@ -173,7 +206,20 @@ shinyUI(
                     bsButton("plotly_button", label = NULL, icon = icon("meh-o")),
                     width = 12)
                 )
-        )
+        ),
+        tabItem(tabName = "guide",
+                fluidRow(
+                  box(title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
+                    # Download sample data
+                    downloadLink("EQsample_link", "Sample Equilibrium Data"),
+#                     img(src='1.png', height = 500, width = 900),
+                    width = 12),                  
+                  box(title = "Tie-Line Data", status = "primary", solidHeader = TRUE,
+                    # Download sample data
+                    downloadLink("TLsample_link", "Sample Tie-Line Data"),
+                    width = 12)
+                )
+              )
             )
           )
     ))
