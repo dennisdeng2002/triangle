@@ -14,7 +14,13 @@ shinyUI(
         menuItem("LLE Data", tabName = "data", icon = icon("table")),
         menuItem("Ternary Plot", tabName = "Tplot", icon = icon("area-chart")),
         menuItem("Right Triangular Plot", tabName = "RTplot", icon = icon("area-chart")),
-        menuItem("Guide", tabName = "guide", icon = icon("question"))
+        menuItem("User Guide", tabName = "guide", icon = icon("book")),
+        menuItem("Source Code", tabName = "code", icon = icon("file-text-o"), 
+                 menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
+                 menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
+                 menuSubItem("functions", tabName = "functions", icon = icon("angle-right"))
+                 ),
+        menuItem("Contact Info", tabName = "info", icon = icon("info"))
       )),
     # Generate plot
     dashboardBody(
@@ -108,7 +114,8 @@ shinyUI(
                                          selected = " "),
                             size = "small"
                     ),
-                    selectInput("TLcomponent", "Component", choices = c("X1", "X2", "X3"), selected = "X1", width = "150px"),
+                    selectInput("TLcomponent", "Component", choices = c("X1", "X2", "X3"),
+                                selected = "X1", width = "150px"),
                     # Generate tie-line data table
                     rHandsontableOutput("TLhot"),
                     br(),
@@ -127,7 +134,8 @@ shinyUI(
                     sliderInput("extract", label = "Extract", min = 1, max = 10, value = c(6,10)),
                     div(style="width: 50%; margin: 0 auto;",
                     actionButton("setRanges_button", "Set Ranges"),
-                    bsButton("switchRanges_button", "Switch", type = "action", block = FALSE, icon = icon("arrows-v"))), width = 5)
+                    bsButton("switchRanges_button", "Switch", type = "action", block = FALSE,
+                             icon = icon("arrows-v"))), width = 5)
                 )
         ),
         tabItem(tabName = "Tplot",
@@ -150,7 +158,8 @@ shinyUI(
                             tags$head(tags$style(HTML("input[type=\"number\"] {width: 125px;}"))),
                             numericInput("pointsize", "Point Size", value = 1.5, min = 0.5, max = 3, step = 0.25),
                             numericInput("linethickness", "Tie-Line Thickness", value = 0.5, min = 0.1, max = 1, step = 0.1),
-                            radioButtons("overalltheme", "Overall Theme", choices = c("Gray" = "Gray", "B/W" = "B/W", "RGB" = "RGB"), selected = "Gray", width = "125px"),
+                            radioButtons("overalltheme", "Overall Theme", choices = c("Gray" = "Gray", "B/W" = "B/W", "RGB" = "RGB"),
+                                         selected = "Gray", width = "125px"),
                             actionLink("default_link", 'Defaults'),
                             size = "small"
                     ),
@@ -187,9 +196,11 @@ shinyUI(
                             numericInput("RTpointsize", "Point Size", value = 1.5, min = 0.5, max = 3, step = 0.25),
                             numericInput("RTlinethickness", "Tie-Line Thickness", value = 0.5, min = 0.1, max = 1, step = 0.1),
                             selectInput("RToveralltheme", "Overall Theme",
-                                        choices = c("Gray" = "Gray", "B/W" = "B/W", "Calc" = "Calc", "Economist" = "Economist",
-                                                    "Excel" = "Excel", "Few" = "Few", "Google Docs" = "Google Docs", "Highcharts" = "Highcharts",
-                                                    "Pander" = "Pander", "Solarized" = "Solarized", "Stata" = "Stata", 
+                                        choices = c("Gray" = "Gray", "B/W" = "B/W", "Calc" = "Calc",
+                                                    "Economist" = "Economist", "Excel" = "Excel",
+                                                    "Few" = "Few", "Google Docs" = "Google Docs",
+                                                    "Highcharts" = "Highcharts", "Pander" = "Pander",
+                                                    "Solarized" = "Solarized", "Stata" = "Stata", 
                                                     "Tufte" = "Tufte", "WSJ" = "WSJ"),
                                         selected = "Gray", width = "125px"),
                             actionLink("RTdefault_link", 'Defaults'),
@@ -210,14 +221,42 @@ shinyUI(
         tabItem(tabName = "guide",
                 fluidRow(
                   box(title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
-                    # Download sample data
-                    downloadLink("EQsample_link", "Sample Equilibrium Data"),
-#                     img(src='1.png', height = 500, width = 900),
-                    width = 12),                  
+                      collapsible = TRUE,
+                      # Download sample data
+                      downloadLink("EQsample_link", "Sample Equilibrium Data"),
+                      width = 12),                  
                   box(title = "Tie-Line Data", status = "primary", solidHeader = TRUE,
-                    # Download sample data
-                    downloadLink("TLsample_link", "Sample Tie-Line Data"),
-                    width = 12)
+                      collapsible = TRUE,
+                      # Download sample data
+                      downloadLink("TLsample_link", "Sample Tie-Line Data"),
+                      width = 12)
+                )
+        ),
+        tabItem(tabName = "ui",
+                fluidRow(
+                  box(
+                      pre(includeText("ui.R")),
+                      width = 12)
+                )
+              ),
+        tabItem(tabName = "server",
+                fluidRow(
+                  box(
+                      pre(includeText("server.R")),
+                      width = 12)
+                )
+              ),
+        tabItem(tabName = "functions",
+                fluidRow(
+                  box(
+                      pre(includeText("functions/checkifdecimals.R")),
+                      pre(includeText("functions/interpolate.R")),
+                      pre(includeText("functions/interpolateTL.R")),
+                      pre(includeText("functions/normalize.R")),
+                      pre(includeText("functions/plotit.R")),
+                      pre(includeText("functions/plotitRT.R")),
+                      pre(includeText("functions/sortDecreasing.R")),
+                      width = 12)
                 )
               )
             )

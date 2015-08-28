@@ -49,9 +49,18 @@ shinyServer(function(input, output, session) {
       counter$i = isolate(counter$i) + 1
     }
     
+    # If only two data columns are given calculate third data column
+    if(ncol(values[["EQhot"]])==2){
+      DF = values[["EQhot"]]
+      DF[3] = 1 - DF[2] - DF[1]
+      colnames(DF)[3] <- "X3"
+      setTable(DF, name = "EQhot")
+      # Incorrect data format error message
+      createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
+    }
+    
     # Return updated data
     values[["EQhot"]]
-
   })
   
   # Equilibrium Data Events
@@ -81,8 +90,8 @@ shinyServer(function(input, output, session) {
         separator = input$EQseparator
         # Read uploaded text file
         DF = read.table(infile$datapath, header = TRUE, sep = separator)
-        # Check if data has been read correctly
-        if(ncol(DF)!=3){
+        # If data has 1 column, assume incorrect uploading and let user choose delimiter
+        if(ncol(DF)==1){
           toggleModal(session, "EQtextfile_box", toggle = "toggle")
           # Set table to default (0)
           DF = data.frame(matrix(0.0, nrow=10, ncol=3))
@@ -150,6 +159,7 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "interpolateAlert")
     closeAlert(session, "sliderAlert")
     closeAlert(session, "EQfileAlert")
+    closeAlert(session, "EQcolumnAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "EQfile")
     # Reset column names for additional data
@@ -284,8 +294,8 @@ shinyServer(function(input, output, session) {
         separator = input$TLseparator
         # Read uploaded text file
         DF2 = read.table(infile$datapath, header = TRUE, sep = separator)
-        # Check if data has been read correctly
-        if(ncol(DF2)!=2){
+        # If data has 1 column, assume incorrect uploading and let user choose delimiter
+        if(ncol(DF2)==2){
           toggleModal(session, "TLtextfile_box", toggle = "toggle")
           # Set table to default (0)
           DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
@@ -348,6 +358,7 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "interpolateAlert")
     closeAlert(session, "sliderAlert")
     closeAlert(session, "EQfileAlert")
+    closeAlert(session, "EQcolumnAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "TLfile")
   })
@@ -615,7 +626,7 @@ shinyServer(function(input, output, session) {
     # Extract data from myTLData() as a data frame instead of a list value
     TLData <- as.data.frame(myTLData()[1])
     # Render ternary diagram
-    gg <- plotit(myEQData, TLData, myData, toggle$hit, myTheme)
+    gg <- plotit(myEQData(), TLData, myData(), toggle$hit, myTheme())
     
     # Works with both renderPlot/plotOutput (mouse events) and renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
     # svgPanZoom(gg, controlIconsEnabled = TRUE)
@@ -634,7 +645,7 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       # Generate graph
       TLData <- as.data.frame(myTLData()[1])
-      gg <- plotit(myEQData, TLData, myData, toggle$hit, myTheme)
+      gg <- plotit(myEQData(), TLData, myData(), toggle$hit, myTheme())
       # Save as pdf
       pdf(file)
       print(gg)
@@ -661,7 +672,7 @@ shinyServer(function(input, output, session) {
   
   # Generate right triangular plot
   output$RightPlot <- renderPlot({
-    gg <- plotitRT(myEQData, myRTData, input$component1, input$component2, toggle$hitRT, session, myRTTheme)
+    gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
     gg
   })
 
@@ -671,7 +682,7 @@ shinyServer(function(input, output, session) {
     filename = function() {paste(paste(input$component1, input$component2, sep = "-"), ".pdf", sep="")},
     content = function(file) {
       # Generate graph
-      gg <- plotitRT(myEQData, myRTData, input$component1, input$component2, toggle$hitRT, session, myRTTheme)
+      gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
       # Save as pdf
       pdf(file)
       print(gg)
@@ -681,7 +692,7 @@ shinyServer(function(input, output, session) {
   
   # Generate right triangular plot (plotly)
   output$RightPlotly <- renderPlotly({
-    gg <- plotitRT(myEQData, myRTData, input$component1, input$component2, toggle$hitRT, session, myRTTheme)
+    gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
     p <- ggplotly(gg)
     p
   })
