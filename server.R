@@ -8,6 +8,7 @@ library(tools)
 library(plotly)
 library(xlsx)
 library(ggthemes)
+library(mailR)
 
 source("functions/interpolate.R")
 source("functions/interpolateTL.R")
@@ -16,6 +17,7 @@ source("functions/normalize.R")
 source("functions/plotit.R")
 source("functions/plotitRT.R")
 source("functions/checkifdecimals.R")
+source("functions/isValidEmail.R")
 
 shinyServer(function(input, output, session) {
   
@@ -47,16 +49,6 @@ shinyServer(function(input, output, session) {
       DF = data.frame(matrix(0.0, nrow=10, ncol=3))
       setTable(DF, name = "EQhot")
       counter$i = isolate(counter$i) + 1
-    }
-    
-    # If only two data columns are given calculate third data column
-    if(ncol(values[["EQhot"]])==2){
-      DF = values[["EQhot"]]
-      DF[3] = 1 - DF[2] - DF[1]
-      colnames(DF)[3] <- "X3"
-      setTable(DF, name = "EQhot")
-      # Incorrect data format error message
-      createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
     }
     
     # Return updated data
@@ -103,20 +95,27 @@ shinyServer(function(input, output, session) {
         # Set table to default (0)
         DF = data.frame(matrix(0.0, nrow=10, ncol=3))
       }
+      # If only two data columns are given calculate third data column
+      if(ncol(DF)==2){
+        DF[3] = 1 - DF[2] - DF[1]
+        # Set third column to X3
+        colnames(DF)[3] <- "X3"
+        # Incorrect data format error message
+        createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
+      }
       # Set table to uploaded data
       setTable(DF, name = "EQhot")
       # Update sliders based on number of equilibrium points (initial estimate)
       updateSliderInput(session, "raffinate", min = 1, max = nrow(DF), value = c(1,floor(nrow(DF)/2)))
       updateSliderInput(session, "extract", min = 1, max = nrow(DF), value = c(floor(nrow(DF)/2)+1,nrow(DF)))
       # Extract Column Headings
-      col_head <- colnames(myEQData())
+      col_head <- colnames(values[["EQhot"]])
       toggle$on <- TRUE
-      toggle$rowsEQ <- nrow(myEQData())
+      toggle$rowsEQ <- nrow(values[["EQhot"]])
       # Update component names
       updateSelectInput(session, "TLcomponent", choices = col_head)
       # Set header for additional data (ternary)
       DF3 = values[["hot"]]
-      col_head = colnames(DF)
       if(!is.null(colnames(DF3))){
         colnames(DF3) <- c(col_head[1], col_head[2], col_head[3], "Label")
         setTable(DF3, name = "hot")
@@ -627,7 +626,6 @@ shinyServer(function(input, output, session) {
     TLData <- as.data.frame(myTLData()[1])
     # Render ternary diagram
     gg <- plotit(myEQData(), TLData, myData(), toggle$hit, myTheme())
-    
     # Works with both renderPlot/plotOutput (mouse events) and renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
     # svgPanZoom(gg, controlIconsEnabled = TRUE)
     
@@ -692,7 +690,10 @@ shinyServer(function(input, output, session) {
   
   # Generate right triangular plot (plotly)
   output$RightPlotly <- renderPlotly({
-    gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
+    # Point size in plotly requires different scale than R (3x)
+    RTTheme <- myRTTheme()
+    RTTheme[[1]] <- RTTheme[[1]]*3
+    gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, RTTheme)
     p <- ggplotly(gg)
     p
   })
@@ -776,6 +777,47 @@ shinyServer(function(input, output, session) {
     setTable(DF4, name = "RThot")
   })
  
+  observeEvent(input$sendmail,{
+    sender <- input$sender
+    subject <- input$subject
+    message <- input$message
+    # Error occurs if message is empty
+    if(message==""){
+      message <- "Empty"
+    }
+    if(subject==""){
+      subject <- "No Subject"
+    }
+    # Check if email is valid
+    if(isValidEmail(sender)==TRUE){
+      # Combine subject and their email address together (email isn't sent through their email address)
+      info <- paste(subject, sender, sep = ", ")
+      # Send email and output alert
+      send.mail(from = "triangleshinyapp@gmail.com", to = "triangleshinyapp@gmail.com", subject = info, body = message, smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = "triangleshinyapp@gmail.com", passwd = "triangleshiny", ssl = TRUE), authenticate = TRUE, send = TRUE)
+      createAlert(session, "emailalert", "emailsent", content = "Success! Response Time: 24-48 Hours", append = FALSE)
+    }
+    else{
+      createAlert(session, "emailalert", "invalidemail", content = "Failure! Invalid Email Address", append = FALSE)
+    }
+  })
+  
+  # Render textbox
+  output$textbox <- renderUI({
+    HTML('<textarea id="message" rows="20" cols="" style="resize:none"></textarea>')
+  })
+  
+  observeEvent(input$clearmail,{
+    # Clear text inputs
+    updateTextInput(session, "sender", value = "")
+    updateTextInput(session, "subject", value = "")
+    # Clear message textbox
+    output$textbox <- renderUI({
+      HTML('<textarea id="message" rows="20" cols="" style="resize:none"></textarea>')
+    })
+    closeAlert(session, "emailsent")
+    closeAlert(session, "invalidemail")
+  })
+  
   # Toggle options
   output$fileUploaded <- reactive({
     return(!is.null(toggle$on))

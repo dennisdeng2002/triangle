@@ -14,7 +14,10 @@ shinyUI(
         menuItem("LLE Data", tabName = "data", icon = icon("table")),
         menuItem("Ternary Plot", tabName = "Tplot", icon = icon("area-chart")),
         menuItem("Right Triangular Plot", tabName = "RTplot", icon = icon("area-chart")),
-        menuItem("User Guide", tabName = "guide", icon = icon("book")),
+        menuItem("User Guide", tabName = "guide", icon = icon("book"),
+                 menuSubItem("General Procedure", tabName = "general", icon = icon("angle-right")),
+                 menuSubItem("Details/Features", tabName = "details", icon = icon("angle-right"))
+                 ),
         menuItem("Source Code", tabName = "code", icon = icon("file-text-o"), 
                  menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
                  menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
@@ -40,7 +43,6 @@ shinyUI(
                   bsAlert("alert"),
                   box(
                     title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
-                    collapsible = TRUE,
                     bsModal("add_headerbox", "Component Names", trigger = "add_header_link",
                             textInput(inputId="X1", label="X1", value="", width="50%"),
                             textInput(inputId="X2", label="X2", value="", width="50%"),
@@ -88,7 +90,6 @@ shinyUI(
                   
                   box(
                     title = "Tie-Line Data", status = "primary", solidHeader = TRUE,
-                    collapsible = TRUE,
                     div(style="width: 50%; margin: 0 auto;",
                     # Upload CSV file of tie-line data
                     fileInput("TLfile", "Upload Tie-Line Data:", accept=c(
@@ -218,17 +219,95 @@ shinyUI(
                     width = 12)
                 )
         ),
-        tabItem(tabName = "guide",
+        tabItem(tabName = "general",
+                fluidRow(
+                  box(title = "General Procedure", status = "primary", solidHeader = TRUE,
+                      collapsible = TRUE,
+                      tags$ul(
+                        tags$li("Enter or upload equilbrium data"),
+                        img(src = "1a.png", height = 300, width = 500),
+                        img(src = "1b.png", height = 300, width = 300)
+                      ),
+                      br(),
+                      tags$ul(
+                        tags$li("Select component, then enter/upload tie-line data"),
+                        img(src = "2a.png", height = 300, width = 300),
+                        img(src = "2b.png", height = 300, width = 300)
+                      ),
+                      br(),
+                      tags$ul(
+                        tags$li("If necessary, alter extract/raffinate ranges (press set ranges to update graph)"),
+                        img(src = "3a.png", height = 200, width = 275),
+                        img(src = "3b.png", height = 200, width = 275)
+                      ),
+                      br(),
+                      tags$ul(
+                        tags$li("View ternary plot (options: toggle axis, add points, change theme, download)"),
+                        img(src = "4.png", height = 600, width = 1000)
+                      ),
+                      br(),
+                      tags$ul(
+                        tags$li("View right triangular plot (options: toggle axis, choose components, add points, change theme, download, plot.ly)"),
+                        img(src = "5.png", height = 600, width = 1000)
+                      ),
+                    width = 12)
+                )
+        ),
+        tabItem(tabName = "details",
                 fluidRow(
                   box(title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
                       collapsible = TRUE,
                       # Download sample data
                       downloadLink("EQsample_link", "Sample Equilibrium Data"),
+                      tags$ul(
+                        tags$li("Accepted file types include .csv, .tsv, .txt, .xls (doesn't work in Chrome), and .xlsx (rtf files must be converted to plain text)"),
+                        tags$li("Table options can be accessed by right clicking a cell"),
+                        tags$li("First row of uploaded data must be your component names"),
+                        tags$li("For .txt files the default delimiter is a space (make sure there aren't any hanging spaces at the end of rows)"),
+                        tags$li("Commas, semicolons, and tabs are also accepted as delimiters, and you will be prompted to select the delimiter and reupload the data"),
+                        tags$li("If only two data columns are given the third will be calculated (summation = 1)")
+                      ),
                       width = 12),                  
                   box(title = "Tie-Line Data", status = "primary", solidHeader = TRUE,
                       collapsible = TRUE,
                       # Download sample data
                       downloadLink("TLsample_link", "Sample Tie-Line Data"),
+                      tags$ul(
+                        tags$li("Uploading or entering tie-line data without equilibrium data will result in an error."),
+                        tags$li("Tie-line data should be entered using a single component for both extract and raffinate"),
+                        tags$li("Actual data points (all three coordinates) will be calculated using a linear interpolation method"),
+                        tags$li("Errors in interpolation generally occur due to incorrectly set ranges (next section), and an alert will be prompted if interpolated values are zero or negative"),
+                        tags$li("Graph button is used to commit any changes in tie-line data or component choice and update plots")
+                      ),
+                      width = 12),
+                  box(title = "Ranges", status = "primary", solidHeader = TRUE,
+                      tags$ul(
+                        tags$li("Initial ranges are automatically calculated (equilibrium data is assumed symmetrical)"),
+                        tags$li("Plots will only update when the set ranges button is pressed (pressing switch button therefore will not update plots)"),
+                        tags$li("Ranges are programmed to sum up to the number of rows given in the equilibrium data")
+                      ),
+                      collapsible = TRUE,
+                      
+                      width = 12),
+                  box(title = "Ternary Plot", status = "primary", solidHeader = TRUE,
+                      collapsible = TRUE,
+                      tags$ul(
+                        tags$li("Toggle Axis: only enabled once equilibrium data is uploaded"),
+                        tags$li("Add Option: additional points can be added with their corresponding labels by entering data and pressing graph"),
+                        tags$li("Graph Elements: point size, line thickness, and overall theme are customizable"),
+                        tags$li("Download: save plot as pdf (preserves overall quality)")
+                      ),
+                      width = 12),
+                  box(title = "Right Triangular Plot", status = "primary", solidHeader = TRUE,
+                      collapsible = TRUE,
+                      tags$ul(
+                        tags$li("Toggle Axis: only enabled once equilibrium data is uploaded"),
+                        tags$li("Choose Components: allows you to choose what components to plot on the x and y axis"),
+                        tags$li("Add Option: additional points can be added either by entering data manually or double clicking the plot itself (cycles through points)"),
+                        tags$li("Graph Elements: point size, line thickness, and overall theme are customizable"),
+                        tags$li("Download: save plot as pdf (preserves overall quality)"),
+                        tags$li("Plot.ly: open plot using plot.ly API")
+                      ),
                       width = 12)
                 )
         ),
@@ -252,11 +331,45 @@ shinyUI(
                       pre(includeText("functions/checkifdecimals.R")),
                       pre(includeText("functions/interpolate.R")),
                       pre(includeText("functions/interpolateTL.R")),
+                      pre(includeText("functions/isValidEmail.R")),
                       pre(includeText("functions/normalize.R")),
                       pre(includeText("functions/plotit.R")),
                       pre(includeText("functions/plotitRT.R")),
                       pre(includeText("functions/sortDecreasing.R")),
                       width = 12)
+                )
+              ),
+        tabItem(tabName = "info",
+                bsAlert("emailalert"),
+                fluidRow(
+                  box(title = "Email", status = "primary", solidHeader = TRUE,
+                    textInput("sender", "Email Address:", value = "", width = "500px"),
+                    textInput("subject", "Subject:", value = "", width = "500px"),
+                    tags$style(type="text/css", "textarea {width:100%}"),
+                    uiOutput("textbox"),
+                    bsButton("sendmail", "Send", block = TRUE, icon = icon("send")),
+                    bsButton("clearmail", "Clear", block = TRUE, icon = icon("trash")),
+                    width = 6),
+                  box(title = "About Us", status = "primary", solidHeader = TRUE,
+                    p("This website was developed using Shiny,
+                      \"an elegant and powerful web framework for building web applications using R.\"
+                      It is intended to help chemical engineering students generate ternary equilibrium diagrams,
+                      and is not intended for commercial use. Feel free to contact us with any feedback or questions."),
+                    br(),
+                    h5("Dennis Deng"),
+                    h5("dennisdeng2002@yahoo.com"),
+                    br(),
+                    h5("Ike Okoro"),
+                    h5("@email.com"),
+                    br(),
+                    h5("Kai Chen"),
+                    h5("@email.com"),
+                    br(),
+                    h5("Mark Lastname"),
+                    h5("@email.com"),
+                    br(),
+                    h5(a("Github Page", href = "https://github.com/dennisdeng2002/triangle", target = "_blank")),
+                    width = 6)
                 )
               )
             )
