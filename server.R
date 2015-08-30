@@ -2,7 +2,7 @@ library(shiny)
 library(ggtern)
 library(gridSVG)
 library(svgPanZoom)
-library(SVGAnnotation)
+# library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
 library(plotly)
@@ -294,7 +294,7 @@ shinyServer(function(input, output, session) {
         # Read uploaded text file
         DF2 = read.table(infile$datapath, header = TRUE, sep = separator)
         # If data has 1 column, assume incorrect uploading and let user choose delimiter
-        if(ncol(DF2)==2){
+        if(ncol(DF2)==1){
           toggleModal(session, "TLtextfile_box", toggle = "toggle")
           # Set table to default (0)
           DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
@@ -716,7 +716,7 @@ shinyServer(function(input, output, session) {
   # Download sample equilibrium data
   output$EQsample_link <- downloadHandler(
     # Combine names of all components
-    filename = function() {"Acetone-Water-TCE"},
+    filename = function() {"Acetone-Water-TCE.csv"},
     content = function(file) {
       # R needs to read data file before writing to CSV
       write.csv(read.csv("./EQ_data/EQA.csv"), file, row.names = FALSE)
@@ -743,7 +743,7 @@ shinyServer(function(input, output, session) {
   # Download sample tie-line data
   output$TLsample_link <- downloadHandler(
     # Combine names of all components
-    filename = function() {"Acetone_Tie-Line"},
+    filename = function() {"Acetone_Tie-Line.csv"},
     content = function(file) {
       # R needs to read data file before writing to CSV
       write.csv(read.csv("./EQ_data/TLA.csv"), file, row.names = FALSE)

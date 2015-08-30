@@ -7,6 +7,7 @@ library(plotly)
 
 shinyUI(
   dashboardPage(
+    title = "Liquid-Liquid Extraction",
     dashboardHeader(title = "Liquid-Liquid Extraction"),
     # Sidebar
     dashboardSidebar(
@@ -360,13 +361,13 @@ shinyUI(
                     h5("dennisdeng2002@yahoo.com"),
                     br(),
                     h5("Ike Okoro"),
-                    h5("@email.com"),
+                    h5("iokoro@umd.edu"),
                     br(),
                     h5("Kai Chen"),
-                    h5("@email.com"),
+                    h5("kchen128@terpmail.umd.edu"),
                     br(),
-                    h5("Mark Lastname"),
-                    h5("@email.com"),
+                    h5("Mark Vujnovich"),
+                    h5("mark.vujnovich@gmail.com"),
                     br(),
                     h5(a("Github Page", href = "https://github.com/dennisdeng2002/triangle", target = "_blank")),
                     width = 6)
