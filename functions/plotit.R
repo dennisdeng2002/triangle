@@ -2,7 +2,7 @@ plotit <- function(myEQData, TLData, myData, hit, myTheme) {
   # Set initial graph
   a <- ggtern(data = myEQData) + 
     geom_point(size = myTheme[[1]]) +
-    theme(axis.tern.showarrows = TRUE, axis.tern.showlabels = TRUE) +
+    theme(axis.tern.showarrows = TRUE, axis.tern.showlabels = FALSE) +
     theme(axis.tern.showtitles = FALSE)
     # stat_smooth_tern(se=0, method="loess") + 
 
