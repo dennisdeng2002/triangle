@@ -33,6 +33,26 @@ plotit <- function(myEQData, TLData, myData, hit, myTheme) {
     geom_segment(data = TLData, aes_string(x=colnames(TLData)[3], y=colnames(TLData)[1], z=colnames(TLData)[2], xend=colnames(TLData)[6], yend=colnames(TLData)[4], zend=colnames(TLData)[5]), size = myTheme[[2]], linetype="dotted")
     ) 
   
+  # Toggle tie-line endpoints
+  a <- a + switch(hit,
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[2], y=colnames(TLData)[1], z=colnames(TLData)[3]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[1], y=colnames(TLData)[2], z=colnames(TLData)[3]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[1], y=colnames(TLData)[3], z=colnames(TLData)[2]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[2], y=colnames(TLData)[3], z=colnames(TLData)[1]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[3], y=colnames(TLData)[2], z=colnames(TLData)[1]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[3], y=colnames(TLData)[1], z=colnames(TLData)[2]), size = myTheme[[1]])
+  ) 
+  
+  # Toggle tie-line endpoints
+  a <- a + switch(hit,
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[5], y=colnames(TLData)[4], z=colnames(TLData)[6]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[4], y=colnames(TLData)[5], z=colnames(TLData)[6]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[4], y=colnames(TLData)[6], z=colnames(TLData)[5]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[5], y=colnames(TLData)[6], z=colnames(TLData)[4]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[6], y=colnames(TLData)[5], z=colnames(TLData)[4]), size = myTheme[[1]]),
+    geom_point(data = TLData, aes_string(x=colnames(TLData)[6], y=colnames(TLData)[4], z=colnames(TLData)[5]), size = myTheme[[1]])
+  ) 
+  
   # Add additional data points (toggle to ensure correct orientation)
   a <- a + switch(hit,
     geom_point(data = myData, aes_string(x=colnames(myData)[2], y=colnames(myData)[1], z=colnames(myData)[3]), size = myTheme[[1]]),

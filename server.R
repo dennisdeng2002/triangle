@@ -2,7 +2,7 @@ library(shiny)
 library(ggtern)
 library(gridSVG)
 library(svgPanZoom)
-# library(SVGAnnotation)
+library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
 library(plotly)
@@ -103,6 +103,13 @@ shinyServer(function(input, output, session) {
         # Incorrect data format error message
         createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
       }
+      # Assume incorrect data set if there aren't three columns
+      else if(ncol(DF)!=3){
+        # Set table to default (0)
+        DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+        # Incorrect data format error message
+        createAlert(session, "alert", "EQDataAlert", content = "Error: Incorrect Data Format", append = FALSE)
+      }
       # Set table to uploaded data
       setTable(DF, name = "EQhot")
       # Update sliders based on number of equilibrium points (initial estimate)
@@ -159,6 +166,7 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "sliderAlert")
     closeAlert(session, "EQfileAlert")
     closeAlert(session, "EQcolumnAlert")
+    closeAlert(session, "EQDataAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "EQfile")
     # Reset column names for additional data
@@ -184,9 +192,14 @@ shinyServer(function(input, output, session) {
     updateTextInput(session, "X2", value = "")
     updateTextInput(session, "X3", value = "")
     DF = values[["EQhot"]]
+    DF3 = values[["hot"]]
     col_head <- c("X1", "X2", "X3")
+    col_headL = c("X1", "X2", "X3", "Label")
     colnames(DF) <- col_head
+    colnames(DF3) <- col_headL
+    # Update global equilibrium data
     setTable(DF, name = "EQhot")
+    setTable(DF3, name = "hot")
     # Update component names
     updateSelectInput(session, "TLcomponent", choices = col_head)
     updateSelectInput(session, "component1", choices = col_head, selected = col_head[1])
@@ -195,12 +208,17 @@ shinyServer(function(input, output, session) {
   
   # Modal box submit button
   observeEvent(input$submit_header_button,{
+    # If additional data is null (hasn't been initialized) call myData() to initialize
+    if(is.null(values[["hot"]])){
+      myData()
+    }
     # Store inputs
     X1 <- input$X1
     X2 <- input$X2
     X3 <- input$X3
-    # Store current equilibrium data
+    # Store current data
     DF = values[["EQhot"]]
+    DF3 = values[["hot"]]
     # Check if inputs are empty
     if(X1 == ""){
       X1 <- "X1" 
@@ -213,15 +231,16 @@ shinyServer(function(input, output, session) {
     }
     # Set header names for equilibrium data to inputs
     headernames = c(X1, X2, X3)
+    headernamesL = c(X1, X2, X3, "Label")
     colnames(DF) <- headernames
+    colnames(DF3) <- headernamesL
     # Update global equilibrium data
     setTable(DF, name = "EQhot")
-    # Extract Column Headings
-    col_head <- colnames(values[["EQhot"]])
+    setTable(DF3, name = "hot")
     # Update component names
-    updateSelectInput(session, "TLcomponent", choices = col_head)
-    updateSelectInput(session, "component1", choices = col_head, selected = col_head[1])
-    updateSelectInput(session, "component2", choices = col_head, selected = col_head[2])
+    updateSelectInput(session, "TLcomponent", choices = headernames)
+    updateSelectInput(session, "component1", choices = headernames, selected = headernames[1])
+    updateSelectInput(session, "component2", choices = headernames, selected = headernames[2])
   })
   
   # Set tie-line graph data
@@ -233,6 +252,8 @@ shinyServer(function(input, output, session) {
     input$TLgraph_button
     input$TLclear_button
     input$setRanges_button
+    input$submit_header_button
+    input$clear_header_button
     # Call reactive function for slider inputs, set ranges for raffinate and extract
     Raf <- input$raffinate
     Ext <- input$extract
@@ -306,6 +327,12 @@ shinyServer(function(input, output, session) {
         # Set table to default (0)
         DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
       }
+      # Assume incorrect data set if there aren't three columns
+      if(ncol(DF2)!=2){
+        # Set table to default (0)
+        DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))        # Incorrect data format error message
+        createAlert(session, "alert", "TLDataAlert", content = "Error: Incorrect Data Format", append = FALSE)
+      }
       # Set table to uploaded data
       setTable(DF2, name = "TLhot")
       # Check if DF2 has same dimensions as default
@@ -357,7 +384,8 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "interpolateAlert")
     closeAlert(session, "sliderAlert")
     closeAlert(session, "EQfileAlert")
-    closeAlert(session, "EQcolumnAlert")
+    closeAlert(session, "TLcolumnAlert")
+    closeAlert(session, "TLDataAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "TLfile")
   })
