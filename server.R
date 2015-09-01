@@ -2,7 +2,7 @@ library(shiny)
 library(ggtern)
 library(gridSVG)
 library(svgPanZoom)
-# library(SVGAnnotation)
+library(SVGAnnotation)
 library(rhandsontable)
 library(tools)
 library(plotly)
@@ -103,6 +103,13 @@ shinyServer(function(input, output, session) {
         # Incorrect data format error message
         createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
       }
+      # Assume incorrect data set if there aren't three columns
+      else if(ncol(DF)!=3){
+        # Set table to default (0)
+        DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+        # Incorrect data format error message
+        createAlert(session, "alert", "EQDataAlert", content = "Error: Incorrect Data Format", append = FALSE)
+      }
       # Set table to uploaded data
       setTable(DF, name = "EQhot")
       # Update sliders based on number of equilibrium points (initial estimate)
@@ -159,6 +166,7 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "sliderAlert")
     closeAlert(session, "EQfileAlert")
     closeAlert(session, "EQcolumnAlert")
+    closeAlert(session, "EQDataAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "EQfile")
     # Reset column names for additional data
@@ -306,6 +314,12 @@ shinyServer(function(input, output, session) {
         # Set table to default (0)
         DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
       }
+      # Assume incorrect data set if there aren't three columns
+      if(ncol(DF2)!=2){
+        # Set table to default (0)
+        DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))        # Incorrect data format error message
+        createAlert(session, "alert", "TLDataAlert", content = "Error: Incorrect Data Format", append = FALSE)
+      }
       # Set table to uploaded data
       setTable(DF2, name = "TLhot")
       # Check if DF2 has same dimensions as default
@@ -357,7 +371,8 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "interpolateAlert")
     closeAlert(session, "sliderAlert")
     closeAlert(session, "EQfileAlert")
-    closeAlert(session, "EQcolumnAlert")
+    closeAlert(session, "TLcolumnAlert")
+    closeAlert(session, "TLDataAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "TLfile")
   })
