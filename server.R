@@ -187,12 +187,18 @@ shinyServer(function(input, output, session) {
   
   # Modal box clear button
   observeEvent(input$clear_header_button,{
+    # If additional data is null (hasn't been initialized) call myData() to initialize
+    if(is.null(values[["hot"]])){
+      myData()
+    }
     # Clear text boxes
     updateTextInput(session, "X1", value = "")
     updateTextInput(session, "X2", value = "")
     updateTextInput(session, "X3", value = "")
     DF = values[["EQhot"]]
     DF3 = values[["hot"]]
+    print(DF)
+    print(DF3)
     col_head <- c("X1", "X2", "X3")
     col_headL = c("X1", "X2", "X3", "Label")
     colnames(DF) <- col_head
