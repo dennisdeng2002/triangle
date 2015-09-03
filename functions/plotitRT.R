@@ -1,4 +1,4 @@
-plotitRT <- function(myEQData, myRTData, component1, component2, hitRT, session, myRTTheme) { 
+plotitRT <- function(myEQData, myTLData, myRTData, component1, component2, hitRT, session, myRTTheme) { 
   # Loop counter
   columns = seq(1,ncol(myEQData))
   # Check whether header names for equilbrium data equals component1
@@ -66,11 +66,29 @@ plotitRT <- function(myEQData, myRTData, component1, component2, hitRT, session,
     aes_string(x=colnames(myEQData)[component2num], y=colnames(myEQData)[component1num])
   )
   
-  # Add point
+  # Toggle tie-line data
+  a <- a + switch(hitRT,
+    geom_segment(data = myTLData, aes_string(x=colnames(myTLData)[component1num], y=colnames(myTLData)[component2num], xend=colnames(myTLData)[component1num+3], yend=colnames(myTLData)[component2num+3]), size = myRTTheme[[2]], linetype="dotted"),
+    geom_segment(data = myTLData, aes_string(x=colnames(myTLData)[component2num], y=colnames(myTLData)[component1num], xend=colnames(myTLData)[component2num+3], yend=colnames(myTLData)[component1num+3]), size = myRTTheme[[2]], linetype="dotted")
+  )  
+  
+  # Add tie-line endpoint
+  a <- a + switch(hitRT,
+    geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component1num], y=colnames(myTLData)[component2num]), size = myRTTheme[[1]]),
+    geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component2num], y=colnames(myTLData)[component1num]), size = myRTTheme[[1]])
+  )  
+  
+  # Add tie-line endpoint
+  a <- a + switch(hitRT,
+                  geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component1num+3], y=colnames(myTLData)[component2num+3]), size = myRTTheme[[1]]),
+                  geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component2num+3], y=colnames(myTLData)[component1num+3]), size = myRTTheme[[1]])
+  )  
+  
+  # Add additional point
   a <- a + switch(hitRT,
     geom_point(data = myRTData, aes_string(x=colnames(myRTData)[1], y=colnames(myRTData)[2]), size = myRTTheme[[1]]),
     geom_point(data = myRTData, aes_string(x=colnames(myRTData)[2], y=colnames(myRTData)[1]), size = myRTTheme[[1]])
-                  )
+  )
   
   # Add labels
   a <- a + geom_text(data = myRTData, aes_string(label=colnames(myRTData[3])), hjust=0, vjust=-0.5)

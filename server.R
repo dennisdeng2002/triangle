@@ -704,7 +704,9 @@ shinyServer(function(input, output, session) {
   
   # Generate right triangular plot
   output$RightPlot <- renderPlot({
-    gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
+    # Extract data from myTLData() as a data frame instead of a list value
+    TLData <- as.data.frame(myTLData()[1])
+    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
     gg
   })
 
@@ -724,10 +726,12 @@ shinyServer(function(input, output, session) {
   
   # Generate right triangular plot (plotly)
   output$RightPlotly <- renderPlotly({
+    # Extract data from myTLData() as a data frame instead of a list value
+    TLData <- as.data.frame(myTLData()[1])
     # Point size in plotly requires different scale than R (3x)
     RTTheme <- myRTTheme()
     RTTheme[[1]] <- RTTheme[[1]]*3
-    gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, RTTheme)
+    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, RTTheme)
     p <- ggplotly(gg)
     p
   })

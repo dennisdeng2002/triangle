@@ -1,16 +1,13 @@
 plotit <- function(myEQData, TLData, myData, hit, myTheme) {
   # Set initial graph
   a <- ggtern(data = myEQData) + 
-    geom_point(size = myTheme[[1]]) +
-    theme(axis.tern.showarrows = TRUE, axis.tern.showlabels = FALSE) +
-    theme(axis.tern.showtitles = FALSE)
-    # stat_smooth_tern(se=0, method="loess") + 
+    geom_point(size = myTheme[[1]])
 
   # Set theme
   a <- a + switch(myTheme[[3]],
-                  "Gray" = {theme_gray()},
-                  "B/W" = {theme_bw()},
-                  "RGB" = {theme_rgb()}
+                  "Gray" = {theme_gray() + theme(axis.tern.showtitles = FALSE, axis.tern.showarrows = TRUE)},
+                  "B/W" = {theme_bw() + theme(axis.tern.showtitles = FALSE, axis.tern.showarrows = TRUE)},
+                  "RGB" = {theme_rgb() + theme(axis.tern.showtitles = FALSE, axis.tern.showarrows = TRUE)}
   )
   
   # Toggle equilibrium data
