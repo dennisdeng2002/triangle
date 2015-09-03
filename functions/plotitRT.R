@@ -28,6 +28,7 @@ plotitRT <- function(myEQData, myTLData, myRTData, component1, component2, hitRT
   else{
     # Create reference line (0,100) and (100,0)
     reference = data.frame(matrix(c(0,100,100,0), nrow = 2, ncol = 2))
+    myTLData = myTLData * 100;
   }
   # Set reference line header to plotted data
   colnames(reference) <- c(colnames(myEQData[component1num]), colnames(myEQData[component2num]))
@@ -80,8 +81,8 @@ plotitRT <- function(myEQData, myTLData, myRTData, component1, component2, hitRT
   
   # Add tie-line endpoint
   a <- a + switch(hitRT,
-                  geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component1num+3], y=colnames(myTLData)[component2num+3]), size = myRTTheme[[1]]),
-                  geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component2num+3], y=colnames(myTLData)[component1num+3]), size = myRTTheme[[1]])
+    geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component1num+3], y=colnames(myTLData)[component2num+3]), size = myRTTheme[[1]]),
+    geom_point(data = myTLData, aes_string(x=colnames(myTLData)[component2num+3], y=colnames(myTLData)[component1num+3]), size = myRTTheme[[1]])
   )  
   
   # Add additional point
