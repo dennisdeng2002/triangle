@@ -28,6 +28,7 @@ shinyUI(
       )),
     # Generate plot
     dashboardBody(
+      tags$head(includeScript("google-analytics.js")),
       # Alter header font
       tags$head(tags$style(HTML('.main-header .logo {font-size: 18px;}'))),
       tabItems(
