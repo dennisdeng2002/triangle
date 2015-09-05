@@ -7,7 +7,7 @@ library(plotly)
 
 shinyUI(
   dashboardPage(
-    title = "Liquid-Liquid Extraction",
+    title = "Ternary Diagram Generator",
     dashboardHeader(title = "Liquid-Liquid Extraction"),
     # Sidebar
     dashboardSidebar(
