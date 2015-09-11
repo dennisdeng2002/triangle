@@ -80,15 +80,28 @@ shinyServer(function(input, output, session) {
       }
       else if(infile$type=="text/plain"){
         separator = input$EQseparator
-        # Read uploaded text file
-        DF = read.table(infile$datapath, header = TRUE, sep = separator)
+        DF <- tryCatch(
+          {
+            # Read uploaded text file
+            read.table(infile$datapath, header = TRUE, sep = separator)
+          },
+          error=function(cond) {
+            # Incorrect data format error message
+            createAlert(session, "alert", "EQDataUnequalColumnAlert", content = "Error: Unequal Columns", append = FALSE)
+            return(data.frame(matrix(0.0, nrow=10, ncol=3)))
+            }
+        )
         # If data has 1 column, assume incorrect uploading and let user choose delimiter
         if(ncol(DF)==1){
           toggleModal(session, "EQtextfile_box", toggle = "toggle")
           # Set table to default (0)
           DF = data.frame(matrix(0.0, nrow=10, ncol=3))
-          # Clear uploaded file
-          session$sendCustomMessage(type = "resetFileInputHandler", "EQfile")
+        }
+        else if(ncol(DF)>3){
+          # Set table to default (0)
+          DF = data.frame(matrix(0.0, nrow=10, ncol=3))
+          # Incorrect data format error message
+          createAlert(session, "alert", "EQDataTrailAlert", content = "Error: Trailing Delimiter (End of Rows)", append = FALSE)
         }
       }
       else{
@@ -103,7 +116,7 @@ shinyServer(function(input, output, session) {
         # Incorrect data format error message
         createAlert(session, "alert", "EQcolumnAlert", content = "Warning: Incorrect Data Format (Missing 3rd Column)", append = FALSE)
       }
-      # Assume incorrect data set if there aren't three columns
+      # Assume incorrect data set if there aren't 3 columns
       else if(ncol(DF)!=3){
         # Set table to default (0)
         DF = data.frame(matrix(0.0, nrow=10, ncol=3))
@@ -167,6 +180,8 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "EQfileAlert")
     closeAlert(session, "EQcolumnAlert")
     closeAlert(session, "EQDataAlert")
+    closeAlert(session, "EQDataTrailAlert")
+    closeAlert(session, "EQDataUnequalColumnAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "EQfile")
     # Reset column names for additional data
@@ -197,8 +212,6 @@ shinyServer(function(input, output, session) {
     updateTextInput(session, "X3", value = "")
     DF = values[["EQhot"]]
     DF3 = values[["hot"]]
-    print(DF)
-    print(DF3)
     col_head <- c("X1", "X2", "X3")
     col_headL = c("X1", "X2", "X3", "Label")
     colnames(DF) <- col_head
@@ -318,8 +331,17 @@ shinyServer(function(input, output, session) {
       }
       else if(infile$type=="text/plain"){
         separator = input$TLseparator
-        # Read uploaded text file
-        DF2 = read.table(infile$datapath, header = TRUE, sep = separator)
+        DF2 <- tryCatch(
+          {
+            # Read uploaded text file
+            read.table(infile$datapath, header = TRUE, sep = separator)
+          },
+          error=function(cond) {
+            # Incorrect data format error message
+            createAlert(session, "alert", "TLDataUnequalColumnAlert", content = "Error: Unequal Columns", append = FALSE)
+            return(data.frame(matrix(0.0, nrow=4, ncol=2)))
+          }
+        )
         # If data has 1 column, assume incorrect uploading and let user choose delimiter
         if(ncol(DF2)==1){
           toggleModal(session, "TLtextfile_box", toggle = "toggle")
@@ -327,6 +349,12 @@ shinyServer(function(input, output, session) {
           DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
           # Clear uploaded file
           session$sendCustomMessage(type = "resetFileInputHandler", "TLfile")
+        }
+        else if(ncol(DF2)>2){
+          # Set table to default (0)
+          DF2 = data.frame(matrix(0.0, nrow=4, ncol=2))
+          # Incorrect data format error message
+          createAlert(session, "alert", "TLDataTrailAlert", content = "Error: Trailing Delimiter (End of Rows)", append = FALSE)
         }
       }
       else{
@@ -392,6 +420,8 @@ shinyServer(function(input, output, session) {
     closeAlert(session, "EQfileAlert")
     closeAlert(session, "TLcolumnAlert")
     closeAlert(session, "TLDataAlert")
+    closeAlert(session, "TLDataTrailAlert")
+    closeAlert(session, "TLDataUnequalColumnAlert")
     # Clear uploaded file
     session$sendCustomMessage(type = "resetFileInputHandler", "TLfile")
   })
@@ -716,7 +746,9 @@ shinyServer(function(input, output, session) {
     filename = function() {paste(paste(input$component1, input$component2, sep = "-"), ".pdf", sep="")},
     content = function(file) {
       # Generate graph
-      gg <- plotitRT(myEQData(), myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
+      TLData <- as.data.frame(myTLData()[1])
+      gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
+      gg
       # Save as pdf
       pdf(file)
       print(gg)
@@ -751,16 +783,6 @@ shinyServer(function(input, output, session) {
     }
   )
   
-  # Download sample equilibrium data
-  output$EQsample_link <- downloadHandler(
-    # Combine names of all components
-    filename = function() {"Acetone-Water-TCE.csv"},
-    content = function(file) {
-      # R needs to read data file before writing to CSV
-      write.csv(read.csv("./EQ_data/EQA.csv"), file, row.names = FALSE)
-    }
-  )
-  
   # Render tie-line data table
   output$TLhot <- renderRHandsontable({
     # Extract data from myTLData() as a data frame instead of a list value
@@ -775,16 +797,6 @@ shinyServer(function(input, output, session) {
     filename = function() {paste(paste(input$TLcomponent, "Tie-Line", sep="_"), ".csv", sep="")},
     content = function(file) {
       write.csv(myTLData()[1], file, row.names = FALSE)
-    }
-  )
-  
-  # Download sample tie-line data
-  output$TLsample_link <- downloadHandler(
-    # Combine names of all components
-    filename = function() {"Acetone_Tie-Line.csv"},
-    content = function(file) {
-      # R needs to read data file before writing to CSV
-      write.csv(read.csv("./EQ_data/TLA.csv"), file, row.names = FALSE)
     }
   )
   
@@ -874,5 +886,65 @@ shinyServer(function(input, output, session) {
            addcounter$y <- 1}
     )
   })
+  
+  # Download 8.11 equilibrium data
+  output$EQ811_link <- downloadHandler(
+    # Combine names of all components
+    filename = function() {"Acetone-Water-TCE.csv"},
+    content = function(file) {
+      # R needs to read data file before writing to CSV
+      write.csv(read.csv("./EQ_data/8_11EQ.csv"), file, row.names = FALSE)
+    }
+  )
+  
+  # Download 8.11 tie-line data
+  output$TL811_link <- downloadHandler(
+    # Combine names of all components
+    filename = function() {"Acetone_Tie-Line.csv"},
+    content = function(file) {
+      # R needs to read data file before writing to CSV
+      write.csv(read.csv("./EQ_data/8_11TL.csv"), file, row.names = FALSE)
+    }
+  )
+  
+  # Download 8.14 equilibrium data
+  output$EQ814_link <- downloadHandler(
+    # Combine names of all components
+    filename = function() {"TMA-Water-Benzene.csv"},
+    content = function(file) {
+      # R needs to read data file before writing to CSV
+      write.csv(read.csv("./EQ_data/8_14EQ.csv"), file, row.names = FALSE)
+    }
+  )
+  
+  # Download 8.14 tie-line data
+  output$TL814_link <- downloadHandler(
+    # Combine names of all components
+    filename = function() {"TMA_Tie-Line.csv"},
+    content = function(file) {
+      # R needs to read data file before writing to CSV
+      write.csv(read.csv("./EQ_data/8_14TL.csv"), file, row.names = FALSE)
+    }
+  )
+  
+  # Download 8.15 equilibrium data
+  output$EQ815_link <- downloadHandler(
+    # Combine names of all components
+    filename = function() {"Docosane-DPH-Furfural"},
+    content = function(file) {
+      # R needs to read data file before writing to CSV
+      write.csv(read.csv("./EQ_data/8_15EQ.csv"), file, row.names = FALSE)
+    }
+  )
+  
+  # Download 8.15 tie-line data
+  output$TL815_link <- downloadHandler(
+    # Combine names of all components
+    filename = function() {"Docosane_Tie-Line.csv"},
+    content = function(file) {
+      # R needs to read data file before writing to CSV
+      write.csv(read.csv("./EQ_data/8_15TL.csv"), file, row.names = FALSE)
+    }
+  )
 
 })

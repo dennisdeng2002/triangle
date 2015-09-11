@@ -17,7 +17,8 @@ shinyUI(
         menuItem("Right Triangular Plot", tabName = "RTplot", icon = icon("area-chart")),
         menuItem("User Guide", tabName = "guide", icon = icon("book"),
                  menuSubItem("General Procedure", tabName = "general", icon = icon("angle-right")),
-                 menuSubItem("Details/Features", tabName = "details", icon = icon("angle-right"))
+                 menuSubItem("Details/Features", tabName = "details", icon = icon("angle-right")),
+                 menuSubItem("Datasets", tabName = "datasets", icon = icon("angle-right"))
                  ),
         menuItem("Source Code", tabName = "code", icon = icon("file-text-o"), 
                  menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
@@ -259,8 +260,6 @@ shinyUI(
                 fluidRow(
                   box(title = "Equilibrium Data", status = "primary", solidHeader = TRUE,
                       collapsible = TRUE,
-                      # Download sample data
-                      downloadLink("EQsample_link", "Sample Equilibrium Data"),
                       tags$ul(
                         tags$li("Accepted file types include .csv, .tsv, .txt, .xls (doesn't work in Chrome), and .xlsx (rtf files must be converted to plain text)"),
                         tags$li("Table options can be accessed by right clicking a cell"),
@@ -272,8 +271,6 @@ shinyUI(
                       width = 12),                  
                   box(title = "Tie-Line Data", status = "primary", solidHeader = TRUE,
                       collapsible = TRUE,
-                      # Download sample data
-                      downloadLink("TLsample_link", "Sample Tie-Line Data"),
                       tags$ul(
                         tags$li("Uploading or entering tie-line data without equilibrium data will result in an error."),
                         tags$li("Tie-line data should be entered using a single component for both extract and raffinate"),
@@ -313,6 +310,24 @@ shinyUI(
                       width = 12)
                 )
         ),
+        tabItem(tabName = "datasets",
+                fluidRow(
+                  box(title = "Seader 8.11 - Acetone, Water, TCE", status = "primary", solidHeader = TRUE,
+                      tags$ul(
+                        tags$li(downloadLink("EQ811_link", "Equilibrium Data")),
+                        tags$li(downloadLink("TL811_link", "Tie-Line Data"))
+                      ), width = 4),
+                  box(title = "Seader 8.14 - TMA, Water, Benzene", status = "primary", solidHeader = TRUE,
+                      tags$ul(
+                        tags$li(downloadLink("EQ814_link", "Equilibrium Data")),
+                        tags$li(downloadLink("TL814_link", "Tie-Line Data"))
+                      ), width = 4),
+                  box(title = "Seader 8.15 - Docosane, DPH, Furfural", status = "primary", solidHeader = TRUE,
+                      tags$ul(
+                        tags$li(downloadLink("EQ815_link", "Equilibrium Data (45 °C)")),
+                        tags$li(downloadLink("TL815_link", "Tie-Line Data (45 °C)"))
+                      ), width = 4)
+                )),
         tabItem(tabName = "ui",
                 fluidRow(
                   box(
