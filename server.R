@@ -688,6 +688,7 @@ shinyServer(function(input, output, session) {
   output$TernPlot <- renderSvgPanZoom({
     # Extract data from myTLData() as a data frame instead of a list value
     TLData <- as.data.frame(myTLData()[1])
+    print(TLData)
     # Render ternary diagram
     gg <- plotit(myEQData(), TLData, myData(), toggle$hit, myTheme())
     # Works with both renderPlot/plotOutput (mouse events) and renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
