@@ -33,7 +33,6 @@ interpolate <- function(x, range, myData, x_num, y_num, z_num, session){
   }
   # Create alert message for any zero/negative values
   if(y<0 || z<0 || (y==0 && z==0)){
-    print("a")
     createAlert(session, "alert", "interpolateAlert", content = "Error: Tie-Line Interpolation", append = FALSE)
   }
   # Return both y and z
