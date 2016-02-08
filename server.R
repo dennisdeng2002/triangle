@@ -679,7 +679,7 @@ shinyServer(function(input, output, session) {
   
   # Set theme to defaults (ternary)
   observeEvent(input$default_link, {
-    updateNumericInput(session, "pointsize", value = 1.5)
+    updateNumericInput(session, "pointsize", value = 1)
     updateNumericInput(session, "linethickness", value = 0.5)
     updateRadioButtons(session, "overalltheme", selected = "Gray")
   })
@@ -736,7 +736,7 @@ shinyServer(function(input, output, session) {
   output$RightPlot <- renderPlot({
     # Extract data from myTLData() as a data frame instead of a list value
     TLData <- as.data.frame(myTLData()[1])
-    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
+    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme(), 1)
     gg
   })
 
@@ -747,7 +747,7 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       # Generate graph
       TLData <- as.data.frame(myTLData()[1])
-      gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme())
+      gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, myRTTheme(), 1)
       gg
       # Save as pdf
       pdf(file)
@@ -762,8 +762,8 @@ shinyServer(function(input, output, session) {
     TLData <- as.data.frame(myTLData()[1])
     # Point size in plotly requires different scale than R (3x)
     RTTheme <- myRTTheme()
-    RTTheme[[1]] <- RTTheme[[1]]*3
-    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, RTTheme)
+    RTTheme[[1]] <- RTTheme[[1]]
+    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, RTTheme, 0.1)
     p <- ggplotly(gg)
     p
   })

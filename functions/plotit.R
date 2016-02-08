@@ -5,9 +5,10 @@ plotit <- function(myEQData, TLData, myData, hit, myTheme) {
 
   # Set theme
   a <- a + switch(myTheme[[3]],
-                  "Gray" = {theme_gray() + theme(axis.tern.showtitles = FALSE, axis.tern.showarrows = TRUE)},
-                  "B/W" = {theme_bw() + theme(axis.tern.showtitles = FALSE, axis.tern.showarrows = TRUE)},
-                  "RGB" = {theme_rgb() + theme(axis.tern.showtitles = FALSE, axis.tern.showarrows = TRUE)}
+                  "Gray" = {theme_gray()},
+                  "B/W" = {theme_bw()},
+                  "RGBG" = {theme_rgbg() + theme_hidearrows()},
+                  "RGBW" = {theme_rgbw() + theme_hidearrows()}
   )
   
   # Toggle equilibrium data

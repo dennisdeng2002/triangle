@@ -160,9 +160,9 @@ shinyUI(
                     bsModal("tern_theme_box", "Graph Elements", trigger = "tern_theme_button",
                             # Resize numericInput boxes
                             tags$head(tags$style(HTML("input[type=\"number\"] {width: 125px;}"))),
-                            numericInput("pointsize", "Point Size", value = 1.5, min = 0.5, max = 3, step = 0.25),
+                            numericInput("pointsize", "Point Size", value = .5, min = 0.1, max = 1.5, step = 0.1),
                             numericInput("linethickness", "Tie-Line Thickness", value = 0.5, min = 0.1, max = 1, step = 0.1),
-                            radioButtons("overalltheme", "Overall Theme", choices = c("Gray" = "Gray", "B/W" = "B/W", "RGB" = "RGB"),
+                            radioButtons("overalltheme", "Overall Theme", choices = c("Gray" = "Gray", "B/W" = "B/W", "RGBG" = "RGBG", "RGBW" = "RGBW"),
                                          selected = "Gray", width = "125px"),
                             actionLink("default_link", 'Defaults'),
                             size = "small"

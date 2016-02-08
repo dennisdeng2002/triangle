@@ -1,4 +1,4 @@
-plotitRT <- function(myEQData, myTLData, myRTData, component1, component2, hitRT, session, myRTTheme) { 
+plotitRT <- function(myEQData, myTLData, myRTData, component1, component2, hitRT, session, myRTTheme, refThickness) { 
   # Loop counter
   columns = seq(1,ncol(myEQData))
   # Check whether header names for equilbrium data equals component1
@@ -95,5 +95,5 @@ plotitRT <- function(myEQData, myTLData, myRTData, component1, component2, hitRT
   a <- a + geom_text(data = myRTData, aes_string(label=colnames(myRTData[3])), hjust=0, vjust=-0.5)
   
   # Plot reference line
-  a <- a + geom_line(data=reference, aes_string(x=colnames(myEQData)[component1num], y=colnames(myEQData)[component2num]))
+  a <- a + geom_line(data=reference, aes_string(x=colnames(myEQData)[component1num], y=colnames(myEQData)[component2num]), size = refThickness)
 }
