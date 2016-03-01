@@ -1,9 +1,21 @@
+library(shiny)
 library(shinydashboard)
 library(rhandsontable)
 library(tools)
 library(shinyBS)
 library(svgPanZoom)
 library(plotly)
+library(shinyjs)
+library(V8)
+
+doorbell <- "shinyjs.doorbell = function(params){
+  var defaultParams = {
+    text : \"Test\",
+    email : \"dennisdeng2002@gmail.com\"
+  };
+  params = shinyjs.getParams(params, defaultParams);
+  doorbell.send(params.text, params.email);
+}"
 
 shinyUI(
   dashboardPage(
@@ -29,6 +41,9 @@ shinyUI(
       )),
     # Generate plot
     dashboardBody(
+      useShinyjs(),
+      extendShinyjs(text = doorbell),
+      includeHTML("doorbell.js"),
       tags$head(includeScript("google-analytics.js")),
       # Alter header font
       tags$head(tags$style(HTML('.main-header .logo {font-size: 18px;}'))),
@@ -361,7 +376,6 @@ shinyUI(
                 fluidRow(
                   box(title = "Email", status = "primary", solidHeader = TRUE,
                     textInput("sender", "Email Address:", value = "", width = "500px"),
-                    textInput("subject", "Subject:", value = "", width = "500px"),
                     tags$style(type="text/css", "textarea {width:100%}"),
                     uiOutput("textbox"),
                     bsButton("sendmail", "Send", block = TRUE, icon = icon("send")),

@@ -1,23 +1,12 @@
-library(shiny)
 library(ggtern)
 library(gridSVG)
-library(svgPanZoom)
 library(SVGAnnotation)
-library(rhandsontable)
-library(tools)
-library(plotly)
 library(xlsx)
 library(ggthemes)
-library(mailR)
+library(R.utils)
 
-source("functions/interpolate.R")
-source("functions/interpolateTL.R")
-source("functions/sortDecreasing.R")
-source("functions/normalize.R")
-source("functions/plotit.R")
-source("functions/plotitRT.R")
-source("functions/checkifdecimals.R")
-source("functions/isValidEmail.R")
+# Load all .R files in functions folder
+sapply(list.files(pattern="[.]R$", path="functions/", full.names=TRUE), source);
 
 shinyServer(function(input, output, session) {
   
@@ -826,24 +815,16 @@ shinyServer(function(input, output, session) {
     else{addcounter$point <- addcounter$point + 1}
     setTable(DF4, name = "RThot")
   })
- 
+  
   observeEvent(input$sendmail,{
     sender <- input$sender
-    subject <- input$subject
     message <- input$message
-    # Error occurs if message is empty
-    if(message==""){
-      message <- "Empty"
-    }
-    if(subject==""){
-      subject <- "No Subject"
-    }
+    
     # Check if email is valid
     if(isValidEmail(sender)==TRUE){
-      # Combine subject and their email address together (email isn't sent through their email address)
-      info <- paste(subject, sender, sep = ", ")
+
       # Send email and output alert
-      send.mail(from = "triangleshinyapp@gmail.com", to = "triangleshinyapp@gmail.com", subject = info, body = message, smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = "triangleshinyapp@gmail.com", passwd = "triangleshiny", ssl = TRUE), authenticate = TRUE, send = TRUE)
+      js$doorbell(message, sender)
       createAlert(session, "emailalert", "emailsent", content = "Success! Response Time: 24-48 Hours", append = FALSE)
     }
     else{
@@ -859,7 +840,6 @@ shinyServer(function(input, output, session) {
   observeEvent(input$clearmail,{
     # Clear text inputs
     updateTextInput(session, "sender", value = "")
-    updateTextInput(session, "subject", value = "")
     # Clear message textbox
     output$textbox <- renderUI({
       HTML('<textarea id="message" rows="20" cols="" style="resize:none"></textarea>')
