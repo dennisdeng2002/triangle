@@ -679,14 +679,9 @@ shinyServer(function(input, output, session) {
     TLData <- as.data.frame(myTLData()[1])
     # Render ternary diagram
     gg <- plotit(myEQData(), TLData, myData(), toggle$hit, myTheme())
-    # Works with both renderPlot/plotOutput (mouse events) and renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
-    # svgPanZoom(gg, controlIconsEnabled = TRUE)
-    
+
     # Faster loading time - only works with renderSvgPanZoom/svgPanZoomOutput (native pan/zoom)
     svgPanZoom(svgPlot(show(gg), addInfo = F), panEnabled = FALSE, zoomEnabled = FALSE, dblClickZoomEnabled = FALSE, mouseWheelZoomEnabled = FALSE)
-    
-    # Non SVG plot - renderPlot/plotOutput (mouse events)
-#     gg
   })
   
   # Download ternary plot
@@ -744,18 +739,6 @@ shinyServer(function(input, output, session) {
       dev.off()
     }
   )
-  
-  # Generate right triangular plot (plotly)
-  output$RightPlotly <- renderPlotly({
-    # Extract data from myTLData() as a data frame instead of a list value
-    TLData <- as.data.frame(myTLData()[1])
-    # Point size in plotly requires different scale than R (3x)
-    RTTheme <- myRTTheme()
-    RTTheme[[1]] <- RTTheme[[1]]
-    gg <- plotitRT(myEQData(), TLData, myRTData(), input$component1, input$component2, toggle$hitRT, session, RTTheme, 0.1)
-    p <- ggplotly(gg)
-    p
-  })
   
   # Render equilibrium data table
   output$EQhot <- renderRHandsontable({

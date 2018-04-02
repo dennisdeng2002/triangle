@@ -4,7 +4,6 @@ library(rhandsontable)
 library(tools)
 library(shinyBS)
 library(svgPanZoom)
-library(plotly)
 library(shinyjs)
 library(V8)
 
@@ -31,13 +30,7 @@ shinyUI(
                  menuSubItem("General Procedure", tabName = "general", icon = icon("angle-right")),
                  menuSubItem("Details/Features", tabName = "details", icon = icon("angle-right")),
                  menuSubItem("Datasets", tabName = "datasets", icon = icon("angle-right"))
-                 ),
-        menuItem("Source Code", tabName = "code", icon = icon("file-text-o"), 
-                 menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
-                 menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
-                 menuSubItem("functions", tabName = "functions", icon = icon("angle-right"))
-                 ),
-        menuItem("Contact Info", tabName = "info", icon = icon("info"))
+                 )
       )),
     # Generate plot
     dashboardBody(
@@ -225,15 +218,10 @@ shinyUI(
                             actionLink("RTdefault_link", 'Defaults'),
                             size = "small"
                     ),
-                    bsModal("plotly_box", title = NULL, trigger = "plotly_button",
-                            plotlyOutput("RightPlotly"),
-                            size = "large"
-                    ),
                     bsButton("select_button", label = NULL, icon = icon("list", lib = "glyphicon")),
                     bsButton("right_add_button", label = NULL, icon = icon("plus")),
                     bsButton("right_theme_button", label = NULL, icon = icon("cog", lib = "glyphicon")),
                     downloadButton("RTdownload", label = NULL, class = NULL),
-                    bsButton("plotly_button", label = NULL, icon = icon("meh-o")),
                     width = 12)
                 )
         ),
@@ -342,67 +330,7 @@ shinyUI(
                         tags$li(downloadLink("EQ815_link", "Equilibrium Data (45 °C)")),
                         tags$li(downloadLink("TL815_link", "Tie-Line Data (45 °C)"))
                       ), width = 4)
-                )),
-        tabItem(tabName = "ui",
-                fluidRow(
-                  box(
-                      pre(includeText("ui.R")),
-                      width = 12)
-                )
-              ),
-        tabItem(tabName = "server",
-                fluidRow(
-                  box(
-                      pre(includeText("server.R")),
-                      width = 12)
-                )
-              ),
-        tabItem(tabName = "functions",
-                fluidRow(
-                  box(
-                      pre(includeText("functions/checkifdecimals.R")),
-                      pre(includeText("functions/interpolate.R")),
-                      pre(includeText("functions/interpolateTL.R")),
-                      pre(includeText("functions/isValidEmail.R")),
-                      pre(includeText("functions/normalize.R")),
-                      pre(includeText("functions/plotit.R")),
-                      pre(includeText("functions/plotitRT.R")),
-                      pre(includeText("functions/sortDecreasing.R")),
-                      width = 12)
-                )
-              ),
-        tabItem(tabName = "info",
-                bsAlert("emailalert"),
-                fluidRow(
-                  box(title = "Email", status = "primary", solidHeader = TRUE,
-                    textInput("sender", "Email Address:", value = "", width = "500px"),
-                    tags$style(type="text/css", "textarea {width:100%}"),
-                    uiOutput("textbox"),
-                    bsButton("sendmail", "Send", block = TRUE, icon = icon("send")),
-                    bsButton("clearmail", "Clear", block = TRUE, icon = icon("trash")),
-                    width = 6),
-                  box(title = "About Us", status = "primary", solidHeader = TRUE,
-                    p("This website was developed using Shiny,
-                      \"an elegant and powerful web framework for building web applications using R.\"
-                      It is intended to help chemical engineering students generate ternary equilibrium diagrams,
-                      and is not intended for commercial use. Feel free to contact us with any feedback or questions."),
-                    br(),
-                    h5("Dennis Deng"),
-                    h5("dennisdeng2002@yahoo.com"),
-                    br(),
-                    h5("Ike Okoro"),
-                    h5("iokoro@umd.edu"),
-                    br(),
-                    h5("Kai Chen"),
-                    h5("kchen128@terpmail.umd.edu"),
-                    br(),
-                    h5("Mark Vujnovich"),
-                    h5("mark.vujnovich@gmail.com"),
-                    br(),
-                    h5(a("Github Page", href = "https://github.com/dennisdeng2002/triangle", target = "_blank")),
-                    width = 6)
-                )
-              )
+                ))
             )
           )
     ))
