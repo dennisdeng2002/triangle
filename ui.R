@@ -35,7 +35,7 @@ shinyUI(
     # Generate plot
     dashboardBody(
       useShinyjs(),
-      extendShinyjs(text = doorbell),
+      extendShinyjs(text = doorbell, functions = c("doorbell")),
       includeHTML("doorbell.js"),
       tags$head(includeScript("google-analytics.js")),
       # Alter header font
