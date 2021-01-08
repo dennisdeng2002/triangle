@@ -36,8 +36,8 @@ shinyUI(
     dashboardBody(
       useShinyjs(),
       extendShinyjs(text = doorbell, functions = c("doorbell")),
-      includeHTML("doorbell.js"),
-      tags$head(includeScript("google-analytics.js")),
+      includeHTML("doorbell.html"),
+      tags$head(includeHTML("google-analytics.html")),
       # Alter header font
       tags$head(tags$style(HTML('.main-header .logo {font-size: 18px;}'))),
       tabItems(
