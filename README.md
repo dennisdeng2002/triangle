@@ -7,3 +7,12 @@ Important R Packages:
 * [ggplot2](http://ggplot2.org/)
 * [ggtern](www.ggtern.com)
 * [rhandsontable](https://github.com/jrowen/rhandsontable)
+
+#### Installation
+install.packages(c("shiny", "shinydashboard", "rhandsontable", "tools", "shinyBS", "svgPanZoom", "shinyjs", "V8"))
+
+install.packages(c("ggtern", "gridSVG", "xlsx", "ggthemes", "R.utils"))
+
+install.packages("devtools")
+library(devtools)
+install_github("duncantl/SVGAnnotation")
